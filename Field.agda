@@ -17,7 +17,7 @@ open import Pos renaming (Pos to FinPos)
 Pos : Set
 Pos = FinPos width height
 
-open import Data.Tree.AVL.Sets (Pos-<-strictTotalOrder {width} {height}) as S renaming (⟨Set⟩ to ⟨Set⟩ₚₒₛ)
+open import Data.Tree.AVL.Sets (Pos-strictTotalOrder {width} {height}) as S renaming (⟨Set⟩ to ⟨Set⟩ₚₒₛ)
 
 record Field : Set where
   field

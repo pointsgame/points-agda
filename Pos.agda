@@ -2,65 +2,20 @@ module Pos where
 
 open import Data.Fin using (Fin; suc; inject₁; _<_)
 open import Data.Fin.Patterns
-open import Data.Fin.Properties using (<-trans; <-cmp)
+open import Data.Fin.Properties using (<-strictTotalOrder)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Nat using (ℕ; suc)
-open import Data.Product using (_×_; proj₁; proj₂; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Data.Product.Properties using (,-injective; ,-injectiveʳ)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Product using (_×_; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
 open import Function using (_$_)
 open import Level using () renaming (zero to ℓ₀)
-open import Relation.Binary using (Rel; StrictTotalOrder; IsStrictTotalOrder; Trichotomous; tri<; tri≈; tri>)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; isEquivalence; subst; sym; trans)
+open import Relation.Binary using (StrictTotalOrder)
 
 Pos : ℕ → ℕ → Set
 Pos width height = Fin width × Fin height
 
-_<ₚₒₛ_ : ∀ {width height : ℕ} → Rel (Pos width height) ℓ₀
-⟨ x₁ , y₁ ⟩ <ₚₒₛ ⟨ x₂ , y₂ ⟩ = y₁ < y₂ ⊎ y₁ ≡ y₂ × x₁ < x₂
-
-<ₚₒₛ-trans : ∀ {width height : ℕ} → Relation.Binary.Transitive (_<ₚₒₛ_ {width} {height})
-<ₚₒₛ-trans (inj₁ y₁<y₂) (inj₁ y₂<y₃) = inj₁ (<-trans y₁<y₂ y₂<y₃)
-<ₚₒₛ-trans (inj₁ y₁<y₂) (inj₂ ⟨ y₂≡y₃ , x₂<x₃ ⟩) = inj₁ (subst _ y₂≡y₃ y₁<y₂)
-<ₚₒₛ-trans (inj₂ ⟨ y₁≡y₂ , x₁<x₂ ⟩) (inj₁ y₂<y₃) = inj₁ (subst _ (sym y₁≡y₂) y₂<y₃)
-<ₚₒₛ-trans (inj₂ ⟨ y₁≡y₂ , x₁<x₂ ⟩) (inj₂ ⟨ y₂≡y₃ , x₂<x₃ ⟩) = inj₂ ⟨ trans y₁≡y₂ y₂≡y₃ , <-trans x₁<x₂ x₂<x₃ ⟩
-
-<ₚₒₛ-cmp : ∀ {width height : ℕ} → Trichotomous _≡_ (_<ₚₒₛ_ {width} {height})
-<ₚₒₛ-cmp ⟨ x₁ , y₁ ⟩ ⟨ x₂ , y₂ ⟩ with <-cmp y₁ y₂ | <-cmp x₁ x₂
-... | tri< y₁<y₂ ¬y₁≡y₂ ¬y₂<y₁ | _ = tri<
-                                       (inj₁ y₁<y₂)
-                                       (λ ⟨x₁,y₁⟩≡⟨x₂,y₂⟩ → ¬y₁≡y₂ (,-injectiveʳ ⟨x₁,y₁⟩≡⟨x₂,y₂⟩))
-                                       λ{(inj₁ y₂<y₁) → ¬y₂<y₁ y₂<y₁ ; (inj₂ ⟨ y₂≡y₁ , _ ⟩) → ¬y₁≡y₂ (sym y₂≡y₁)}
-... | tri≈ ¬y₁<y₂ refl ¬y₂<y₁ | tri< x₁<x₂ ¬x₁≡x₂ ¬x₂<x₁ = tri<
-                                                             (inj₂ ⟨ refl , x₁<x₂ ⟩)
-                                                             (λ ⟨x₁,y₁⟩≡⟨x₂,y₁⟩ → ¬x₁≡x₂ (proj₁ (,-injective ⟨x₁,y₁⟩≡⟨x₂,y₁⟩)))
-                                                             λ{(inj₁ y₂<y₁) → ¬y₂<y₁ y₂<y₁ ; (inj₂ ⟨ _ , x₂<x₁ ⟩) → ¬x₂<x₁ x₂<x₁}
-... | tri≈ ¬y₁<y₂ refl ¬y₂<y₁ | tri≈ ¬x₁<x₂ refl ¬x₂<x₁ = tri≈
-                                                            (λ{(inj₁ y₂<y₁) → ¬y₂<y₁ y₂<y₁ ; (inj₂ ⟨ _ , x₂<x₁ ⟩) → ¬x₂<x₁ x₂<x₁})
-                                                            refl
-                                                            λ{(inj₁ y₂<y₁) → ¬y₂<y₁ y₂<y₁ ; (inj₂ ⟨ _ , x₂<x₁ ⟩) → ¬x₂<x₁ x₂<x₁}
-... | tri≈ ¬y₁<y₂ refl ¬y₂<y₁ | tri> ¬x₁<x₂ ¬x₁≡x₂ x₂<x₁ = tri>
-                                                             (λ{(inj₁ y₂<y₁) → ¬y₂<y₁ y₂<y₁ ; (inj₂ ⟨ _ , x₁<x₂ ⟩) → ¬x₁<x₂ x₁<x₂})
-                                                             (λ ⟨x₁,y₁⟩≡⟨x₂,y₁⟩ → ¬x₁≡x₂ (proj₁ (,-injective ⟨x₁,y₁⟩≡⟨x₂,y₁⟩)))
-                                                             (inj₂ ⟨ refl , x₂<x₁ ⟩)
-... | tri> ¬y₁<y₂ ¬y₁≡y₂ y₂<y₁ | _ = tri>
-                                       (λ{(inj₁ y₁<y₂) → ¬y₁<y₂ y₁<y₂ ; (inj₂ ⟨ y₁≡y₂ , _ ⟩) → ¬y₁≡y₂ y₁≡y₂})
-                                       (λ ⟨x₁,y₁⟩≡⟨x₂,y₂⟩ → ¬y₁≡y₂ (,-injectiveʳ ⟨x₁,y₁⟩≡⟨x₂,y₂⟩))
-                                       (inj₁ y₂<y₁)
-
-
-Pos-<-isStrictTotalOrder : ∀ {width height : ℕ} → IsStrictTotalOrder _≡_ (_<ₚₒₛ_ {width} {height})
-Pos-<-isStrictTotalOrder = record
-  { isEquivalence = isEquivalence
-  ; trans         = <ₚₒₛ-trans
-  ; compare       = <ₚₒₛ-cmp
-  }
-
-Pos-<-strictTotalOrder : ∀ {width height : ℕ} → StrictTotalOrder _ _ _
-Pos-<-strictTotalOrder {width} {height} = record
-  { isStrictTotalOrder = Pos-<-isStrictTotalOrder {width} {height}
-  }
-
+Pos-strictTotalOrder : ∀ {width height : ℕ} → StrictTotalOrder _ _ _
+Pos-strictTotalOrder {width} {height} = ×-strictTotalOrder (<-strictTotalOrder width) (<-strictTotalOrder height)
 
 sucx : ∀ {width height : ℕ} → Pos width height → Pos (suc width) height
 sucx ⟨ x , y ⟩ = ⟨ suc x , y ⟩
