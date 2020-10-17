@@ -27,8 +27,8 @@ sucy ⟨ x , y ⟩ = ⟨ x , suc y ⟩
 data Adjacent : {width height : ℕ} → Pos width height → Pos width height → Set where
   adj→ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc height} (⟨ 0F , 0F ⟩) ⟨ 1F , 0F ⟩
   adj↓ : ∀ {width height : ℕ} → Adjacent {suc width} {suc (suc height)} (⟨ 0F , 0F ⟩) ⟨ 0F , 1F ⟩
-  adj↳ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc (suc height)} (⟨ 0F , 0F ⟩) ⟨ 1F , 1F ⟩
-  adj↱ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc (suc height)} (⟨ 0F , 1F ⟩) ⟨ 1F , 0F ⟩
+  adj↘ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc (suc height)} (⟨ 0F , 0F ⟩) ⟨ 1F , 1F ⟩
+  adj↗ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc (suc height)} (⟨ 0F , 1F ⟩) ⟨ 1F , 0F ⟩
   adj⇉ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent {width} {height} pos₁ pos₂ → Adjacent {suc width} {height} (sucx pos₁) (sucx pos₂)
   adj⇊ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent {width} {height} pos₁ pos₂ → Adjacent {width} {suc height} (sucy pos₁) (sucy pos₂)
   adj↔ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent {width} {height} pos₁ pos₂ → Adjacent {width} {height} pos₂ pos₁
@@ -60,3 +60,32 @@ e : ∀ {width height : ℕ} → (pos₁ : Pos width height) → Maybe (∃[ pos
 e {1} {_} ⟨ 0F , _ ⟩ = nothing
 e {suc (suc _)} {_} ⟨ 0F , y ⟩ = just ⟨ ⟨ 1F , y ⟩ , adj↔ (adjacent-lemm₁ 0F y) ⟩
 e ⟨ suc x , y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ suc x₁ , y₁ ⟩ , adj⇉ adj ⟩}) $ s ⟨ x , y ⟩
+
+data Direction : Set where
+  dir→ : Direction
+  dir↘ : Direction
+  dir↓ : Direction
+  dir↙ : Direction
+  dir← : Direction
+  dir↖ : Direction
+  dir↑ : Direction
+  dir↗ : Direction
+
+inverse : Direction → Direction
+inverse dir→ = dir←
+inverse dir↘ = dir↖
+inverse dir↓ = dir↑
+inverse dir↙ = dir↗
+inverse dir← = dir→
+inverse dir↖ = dir↘
+inverse dir↑ = dir↓
+inverse dir↗ = dir↙
+
+direction : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Direction
+direction adj→ = dir→
+direction adj↓ = dir↓
+direction adj↘ = dir↘
+direction adj↗ = dir↗
+direction (adj⇉ adj) = direction adj
+direction (adj⇊ adj) = direction adj
+direction (adj↔ adj) = inverse (direction adj)

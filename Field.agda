@@ -70,5 +70,13 @@ wave startPos f = wave' S.empty (S.singleton startPos)
 getFirstNextPos : (centerPos pos : Pos) → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
 getFirstNextPos centerPos pos adj = {!!}
 
-getNextPos : (centerPos pos : Pos) → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent pos nextPos)
-getNextPos centerPos pos adj = {!!}
+getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent pos nextPos)
+getNextPos {_} {pos} adj with direction adj
+... | dir→ = s pos
+... | dir↘ = w pos
+... | dir↓ = w pos
+... | dir↙ = n pos
+... | dir← = n pos
+... | dir↖ = e pos
+... | dir↑ = e pos
+... | dir↗ = s pos
