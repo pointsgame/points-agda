@@ -33,33 +33,43 @@ data Adjacent : {width height : ℕ} → Pos width height → Pos width height �
   adj⇊ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent {width} {height} pos₁ pos₂ → Adjacent {width} {suc height} (sucy pos₁) (sucy pos₂)
   adj↔ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent {width} {height} pos₁ pos₂ → Adjacent {width} {height} pos₂ pos₁
 
-adjacent-lemm₁ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ suc x , y ⟩) ⟨ inject₁ x , y ⟩
-adjacent-lemm₁ 0F 0F = adj↔ adj→
+adjacent-lemm₁ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ inject₁ x , y ⟩) ⟨ suc x , y ⟩
+adjacent-lemm₁ 0F 0F = adj→
 adjacent-lemm₁ (suc x) 0F = adj⇉ (adjacent-lemm₁ x 0F)
 adjacent-lemm₁ x (suc y) = adj⇊ (adjacent-lemm₁ x y)
 
-adjacent-lemm₂ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ x , suc y ⟩) ⟨ x , inject₁ y ⟩
-adjacent-lemm₂ 0F 0F = adj↔ adj↓
+adjacent-lemm₂ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ x , inject₁ y ⟩) ⟨ x , suc y ⟩
+adjacent-lemm₂ 0F 0F = adj↓
 adjacent-lemm₂ 0F (suc y) = adj⇊ (adjacent-lemm₂ 0F y)
 adjacent-lemm₂ (suc x) y = adj⇉ (adjacent-lemm₂ x y)
 
+adjacent-lemm₃ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ inject₁ x , inject₁ y ⟩) ⟨ suc x , suc y ⟩
+adjacent-lemm₃ 0F 0F = adj↘
+adjacent-lemm₃ 0F (suc y) = adj⇊ (adjacent-lemm₃ 0F y)
+adjacent-lemm₃ (suc x) y = adj⇉ (adjacent-lemm₃ x y)
+
+adjacent-lemm₄ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent (⟨ inject₁ x , suc y ⟩) ⟨ suc x , inject₁ y ⟩
+adjacent-lemm₄ 0F 0F = adj↗
+adjacent-lemm₄ 0F (suc y) = adj⇊ (adjacent-lemm₄ 0F y)
+adjacent-lemm₄ (suc x) y = adj⇉ (adjacent-lemm₄ x y)
+
 n : ∀ {width height : ℕ} → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 n ⟨ _ , 0F ⟩ = nothing
-n ⟨ x , suc y ⟩ = just ⟨ ⟨ x , inject₁ y ⟩ , adjacent-lemm₂ x y ⟩
+n ⟨ x , suc y ⟩ = just ⟨ ⟨ x , inject₁ y ⟩ , adj↔ (adjacent-lemm₂ x y) ⟩
 
 s : ∀ {width height : ℕ} → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 s {_} {1} ⟨ _ , 0F ⟩ = nothing
-s {_} {suc (suc _)} ⟨ x , 0F ⟩ = just ⟨ ⟨ x , 1F ⟩ , adj↔ (adjacent-lemm₂ x 0F) ⟩
+s {_} {suc (suc _)} ⟨ x , 0F ⟩ = just ⟨ ⟨ x , 1F ⟩ , adjacent-lemm₂ x 0F ⟩
 s ⟨ x , suc y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ x₁ , suc y₁ ⟩ , adj⇊ adj ⟩}) $ s ⟨ x , y ⟩
 
 w : ∀ {width height : ℕ} → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 w ⟨ 0F , _ ⟩ = nothing
-w ⟨ suc x , y ⟩ = just ⟨ ⟨ inject₁ x , y ⟩ , adjacent-lemm₁ x y ⟩
+w ⟨ suc x , y ⟩ = just ⟨ ⟨ inject₁ x , y ⟩ , adj↔ (adjacent-lemm₁ x y) ⟩
 
 e : ∀ {width height : ℕ} → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 e {1} {_} ⟨ 0F , _ ⟩ = nothing
-e {suc (suc _)} {_} ⟨ 0F , y ⟩ = just ⟨ ⟨ 1F , y ⟩ , adj↔ (adjacent-lemm₁ 0F y) ⟩
-e ⟨ suc x , y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ suc x₁ , y₁ ⟩ , adj⇉ adj ⟩}) $ s ⟨ x , y ⟩
+e {suc (suc _)} {_} ⟨ 0F , y ⟩ = just ⟨ ⟨ 1F , y ⟩ , adjacent-lemm₁ 0F y ⟩
+e ⟨ suc x , y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ suc x₁ , y₁ ⟩ , adj⇉ adj ⟩}) $ e ⟨ x , y ⟩
 
 data Direction : Set where
   dir→ : Direction
