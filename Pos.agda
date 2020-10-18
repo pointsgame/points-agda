@@ -173,7 +173,11 @@ e {1} {_} ⟨ 0F , _ ⟩ = nothing
 e {suc (suc _)} {_} ⟨ 0F , y ⟩ = just ⟨ ⟨ 1F , y ⟩ , adjacent-lemm₁ 0F y ⟩
 e ⟨ suc x , y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ suc x₁ , y₁ ⟩ , adj⇉ adj ⟩}) $ e ⟨ x , y ⟩
 
--- nw
+nw : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↘ pos₂ pos₁)
+nw pos = do ⟨ npos , adj₁ ⟩ ← n pos
+            ⟨ nwpos , adj₂ ⟩ ← w npos
+            just ⟨ nwpos , adjacent→↓↘ adj₂ adj₁ ⟩
+
 -- ne
 -- sw
 
