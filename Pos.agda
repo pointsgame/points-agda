@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 module Pos where
 
 open import Data.Empty using (⊥-elim)
