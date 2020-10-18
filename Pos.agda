@@ -73,6 +73,11 @@ adjacent↘ adj↘ = adj↘
 adjacent↘ (adj⇉ adj) = adj⇉ (adjacent↘ adj)
 adjacent↘ (adj⇊ adj) = adj⇊ (adjacent↘ adj)
 
+adjacent↗ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↗ pos₁ pos₂ → Adjacent pos₁ pos₂
+adjacent↗ adj↗ = adj↗
+adjacent↗ (adj⇉ adj) = adj⇉ (adjacent↗ adj)
+adjacent↗ (adj⇊ adj) = adj⇊ (adjacent↗ adj)
+
 
 adjacent-lemm₁ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent→ (⟨ inject₁ x , y ⟩) ⟨ suc x , y ⟩
 adjacent-lemm₁ 0F 0F = adj→

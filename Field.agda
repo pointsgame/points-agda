@@ -7,7 +7,7 @@ open import Data.List as List using (List; []; _∷_)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Product using (_×_; proj₁; proj₂; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Function using (_$_)
+open import Function using (_$_; _∘_)
 open import Generic.Main using (_==_)
 
 open import Player
@@ -59,7 +59,11 @@ wave startPos f = wave' S.empty (S.singleton startPos)
         _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         _\\ₛ_ set₁ set₂ = List.foldl (Function.flip S.delete) set₁ (S.toList set₂)
         neighborhood : Pos → List Pos
-        neighborhood pos =  List.mapMaybe (Maybe.map proj₁) $ n pos ∷ s pos ∷ w pos ∷ e pos ∷ []
+        neighborhood pos = List.mapMaybe Function.id $ Maybe.map proj₁ (n pos)
+                                                     ∷ Maybe.map proj₁ (s pos)
+                                                     ∷ Maybe.map proj₁ (w pos)
+                                                     ∷ Maybe.map proj₁ (e pos)
+                                                     ∷ []
         nextFront : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         nextFront passed front = (S.fromList $ List.boolFilter f $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
         wave' : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
@@ -70,13 +74,13 @@ wave startPos f = wave' S.empty (S.singleton startPos)
 getFirstNextPos : (centerPos pos : Pos) → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
 getFirstNextPos centerPos pos adj = {!!}
 
-getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent pos nextPos)
-getNextPos {_} {pos} adj with direction adj
-... | dir→ = s pos
-... | dir↘ = w pos
-... | dir↓ = w pos
-... | dir↙ = n pos
-... | dir← = n pos
-... | dir↖ = e pos
-... | dir↑ = e pos
-... | dir↗ = s pos
+getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
+getNextPos {centerPos} {_} adj with direction adj
+... | dir→ = Maybe.map (Data.Product.map₂ adjacent↘) $ se centerPos
+... | dir↘ = Maybe.map (Data.Product.map₂ adjacent↓) $ s centerPos
+... | dir↓ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↗)) $ sw centerPos
+... | dir↙ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent→)) $ w centerPos
+... | dir← = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↘)) $ nw centerPos
+... | dir↖ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↓)) $ n centerPos
+... | dir↑ = Maybe.map (Data.Product.map₂ adjacent↗) $ ne centerPos
+... | dir↗ = Maybe.map (Data.Product.map₂ adjacent→) $ e centerPos
