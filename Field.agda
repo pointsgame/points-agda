@@ -71,16 +71,8 @@ wave startPos f = wave' S.empty (S.singleton startPos)
                              then passed
                              else wave' (unionₛ passed front) (nextFront passed front)
 
-getFirstNextPos : (centerPos pos : Pos) → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
-getFirstNextPos centerPos pos adj = {!!}
+getFirstNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
+getFirstNextPos adj = {!!}
 
 getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
-getNextPos {centerPos} {_} adj with direction adj
-... | dir→ = Maybe.map (Data.Product.map₂ adjacent↘) $ se centerPos
-... | dir↘ = Maybe.map (Data.Product.map₂ adjacent↓) $ s centerPos
-... | dir↓ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↗)) $ sw centerPos
-... | dir↙ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent→)) $ w centerPos
-... | dir← = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↘)) $ nw centerPos
-... | dir↖ = Maybe.map (Data.Product.map₂ (adj↔ ∘ adjacent↓)) $ n centerPos
-... | dir↑ = Maybe.map (Data.Product.map₂ adjacent↗) $ ne centerPos
-... | dir↗ = Maybe.map (Data.Product.map₂ adjacent→) $ e centerPos
+getNextPos adj = direction→pos (rotate (direction adj)) _

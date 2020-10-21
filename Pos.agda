@@ -10,7 +10,7 @@ open import Data.Maybe as Maybe using (Maybe; nothing; just; _>>=_)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
-open import Function using (_$_)
+open import Function using (_$_; _∘_)
 open import Level using () renaming (zero to ℓ₀)
 open import Relation.Binary using (StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong)
@@ -77,6 +77,18 @@ adjacent↗ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Ad
 adjacent↗ adj↗ = adj↗
 adjacent↗ (adj⇉ adj) = adj⇉ (adjacent↗ adj)
 adjacent↗ (adj⇊ adj) = adj⇊ (adjacent↗ adj)
+
+adjacent← : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent→ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent← = adj↔ ∘ adjacent→
+
+adjacent↑ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↓ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↑ = adj↔ ∘ adjacent↓
+
+adjacent↖ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↘ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↖ = adj↔ ∘ adjacent↘
+
+adjacent↙ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↗ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↙ = adj↔ ∘ adjacent↗
 
 
 adjacent-lemm₁ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent→ (⟨ inject₁ x , y ⟩) ⟨ suc x , y ⟩
@@ -232,6 +244,16 @@ inverse dir↖ = dir↘
 inverse dir↑ = dir↓
 inverse dir↗ = dir↙
 
+rotate : Direction → Direction
+rotate dir→ = dir↘
+rotate dir↘ = dir↓
+rotate dir↓ = dir↙
+rotate dir↙ = dir←
+rotate dir← = dir↖
+rotate dir↖ = dir↑
+rotate dir↑ = dir↗
+rotate dir↗ = dir→
+
 direction : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Direction
 direction adj→ = dir→
 direction adj↓ = dir↓
@@ -240,3 +262,13 @@ direction adj↗ = dir↗
 direction (adj⇉ adj) = direction adj
 direction (adj⇊ adj) = direction adj
 direction (adj↔ adj) = inverse (direction adj)
+
+direction→pos : ∀ {width height : ℕ} → Direction → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+direction→pos dir→ pos = Maybe.map (Data.Product.map₂ adjacent→) $ e pos
+direction→pos dir↘ pos = Maybe.map (Data.Product.map₂ adjacent↘) $ se pos
+direction→pos dir↓ pos = Maybe.map (Data.Product.map₂ adjacent↓) $ s pos
+direction→pos dir↙ pos = Maybe.map (Data.Product.map₂ adjacent↙) $ sw pos
+direction→pos dir← pos = Maybe.map (Data.Product.map₂ adjacent←) $ w pos
+direction→pos dir↖ pos = Maybe.map (Data.Product.map₂ adjacent↖) $ nw pos
+direction→pos dir↑ pos = Maybe.map (Data.Product.map₂ adjacent↑) $ n pos
+direction→pos dir↗ pos = Maybe.map (Data.Product.map₂ adjacent↗) $ ne pos
