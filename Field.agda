@@ -59,11 +59,11 @@ wave startPos f = wave' S.empty (S.singleton startPos)
         _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         _\\ₛ_ set₁ set₂ = List.foldl (Function.flip S.delete) set₁ (S.toList set₂)
         neighborhood : Pos → List Pos
-        neighborhood pos = List.mapMaybe Function.id $ Maybe.map proj₁ (n pos)
-                                                     ∷ Maybe.map proj₁ (s pos)
-                                                     ∷ Maybe.map proj₁ (w pos)
-                                                     ∷ Maybe.map proj₁ (e pos)
-                                                     ∷ []
+        neighborhood pos = List.mapMaybe (Maybe.map proj₁) $ n‵ pos
+                                                           ∷ s‵ pos
+                                                           ∷ w‵ pos
+                                                           ∷ e‵ pos
+                                                           ∷ []
         nextFront : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         nextFront passed front = (S.fromList $ List.boolFilter f $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
         wave' : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ

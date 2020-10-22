@@ -236,6 +236,30 @@ se pos = do ⟨ epos , adj₁ ⟩ ← e pos
             ⟨ sepos , adj₂ ⟩ ← s epos
             just ⟨ sepos , adjacent→↓↘ adj₁ adj₂ ⟩
 
+n‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+n‵ = Maybe.map (Data.Product.map₂ adjacent↑) ∘ n
+
+s‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+s‵ = Maybe.map (Data.Product.map₂ adjacent↓) ∘ s
+
+w‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+w‵ = Maybe.map (Data.Product.map₂ adjacent←) ∘ w
+
+e‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+e‵ = Maybe.map (Data.Product.map₂ adjacent→) ∘ e
+
+nw‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+nw‵ = Maybe.map (Data.Product.map₂ adjacent↖) ∘ nw
+
+ne‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+ne‵ = Maybe.map (Data.Product.map₂ adjacent↗) ∘ ne
+
+sw‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+sw‵ = Maybe.map (Data.Product.map₂ adjacent↙) ∘ sw
+
+se‵ : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+se‵ = Maybe.map (Data.Product.map₂ adjacent↘) ∘ se
+
 data Direction : Set where
   dir→ : Direction
   dir↘ : Direction
@@ -276,11 +300,11 @@ direction (adj⇊ adj) = direction adj
 direction (adj↔ adj) = inverse (direction adj)
 
 direction→pos : ∀ {width height : ℕ} → Direction → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-direction→pos dir→ pos = Maybe.map (Data.Product.map₂ adjacent→) $ e pos
-direction→pos dir↘ pos = Maybe.map (Data.Product.map₂ adjacent↘) $ se pos
-direction→pos dir↓ pos = Maybe.map (Data.Product.map₂ adjacent↓) $ s pos
-direction→pos dir↙ pos = Maybe.map (Data.Product.map₂ adjacent↙) $ sw pos
-direction→pos dir← pos = Maybe.map (Data.Product.map₂ adjacent←) $ w pos
-direction→pos dir↖ pos = Maybe.map (Data.Product.map₂ adjacent↖) $ nw pos
-direction→pos dir↑ pos = Maybe.map (Data.Product.map₂ adjacent↑) $ n pos
-direction→pos dir↗ pos = Maybe.map (Data.Product.map₂ adjacent↗) $ ne pos
+direction→pos dir→ = e‵
+direction→pos dir↘ = se‵
+direction→pos dir↓ = s‵
+direction→pos dir↙ = sw‵
+direction→pos dir← = w‵
+direction→pos dir↖ = nw‵
+direction→pos dir↑ = n‵
+direction→pos dir↗ = ne‵
