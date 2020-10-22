@@ -48,6 +48,18 @@ data Adjacent↗ : {width height : ℕ} → Pos width height → Pos width heigh
   adj⇉ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↗ {width} {height} pos₁ pos₂ → Adjacent↗ {suc width} {height} (sucx pos₁) (sucx pos₂)
   adj⇊ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↗ {width} {height} pos₁ pos₂ → Adjacent↗ {width} {suc height} (sucy pos₁) (sucy pos₂)
 
+Adjacent← : {width height : ℕ} → Pos width height → Pos width height → Set
+Adjacent← pos₁ pos₂ = Adjacent→ pos₂ pos₁
+
+Adjacent↑ : {width height : ℕ} → Pos width height → Pos width height → Set
+Adjacent↑ pos₁ pos₂ = Adjacent↓ pos₂ pos₁
+
+Adjacent↖ : {width height : ℕ} → Pos width height → Pos width height → Set
+Adjacent↖ pos₁ pos₂ = Adjacent↘ pos₂ pos₁
+
+Adjacent↙ : {width height : ℕ} → Pos width height → Pos width height → Set
+Adjacent↙ pos₁ pos₂ = Adjacent↗ pos₂ pos₁
+
 -- x does right, y goes down
 data Adjacent : {width height : ℕ} → Pos width height → Pos width height → Set where
   adj→ : ∀ {width height : ℕ} → Adjacent {suc (suc width)} {suc height} (⟨ 0F , 0F ⟩) ⟨ 1F , 0F ⟩
@@ -78,16 +90,16 @@ adjacent↗ adj↗ = adj↗
 adjacent↗ (adj⇉ adj) = adj⇉ (adjacent↗ adj)
 adjacent↗ (adj⇊ adj) = adj⇊ (adjacent↗ adj)
 
-adjacent← : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent→ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent← : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent← pos₁ pos₂ → Adjacent pos₁ pos₂
 adjacent← = adj↔ ∘ adjacent→
 
-adjacent↑ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↓ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↑ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↑ pos₁ pos₂ → Adjacent pos₁ pos₂
 adjacent↑ = adj↔ ∘ adjacent↓
 
-adjacent↖ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↘ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↖ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↖ pos₁ pos₂ → Adjacent pos₁ pos₂
 adjacent↖ = adj↔ ∘ adjacent↘
 
-adjacent↙ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↗ pos₂ pos₁ → Adjacent pos₁ pos₂
+adjacent↙ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent↙ pos₁ pos₂ → Adjacent pos₁ pos₂
 adjacent↙ = adj↔ ∘ adjacent↗
 
 
@@ -186,7 +198,7 @@ adjacent→↑↗ {pos₁ = ⟨ _ , suc _ ⟩} {pos₃ = ⟨ suc _ , _ ⟩} (adj
                                                                                         | adjacent↓-refl₂ adj₂ = adjacent-lemm₄ _ _
 adjacent→↑↗ (adj⇊ adj₁) (adj⇊ adj₂) = adj⇊ (adjacent→↑↗ adj₁ adj₂)
 
-n : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↓ pos₂ pos₁)
+n : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↑ pos₁ pos₂)
 n ⟨ _ , 0F ⟩ = nothing
 n ⟨ x , suc y ⟩ = just ⟨ ⟨ x , inject₁ y ⟩ , adjacent-lemm₂ x y ⟩
 
@@ -195,7 +207,7 @@ s {_} {1} ⟨ _ , 0F ⟩ = nothing
 s {_} {suc (suc _)} ⟨ x , 0F ⟩ = just ⟨ ⟨ x , 1F ⟩ , adjacent-lemm₂ x 0F ⟩
 s ⟨ x , suc y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ x₁ , suc y₁ ⟩ , adj⇊ adj ⟩}) $ s ⟨ x , y ⟩
 
-w : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent→ pos₂ pos₁)
+w : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent← pos₁ pos₂)
 w ⟨ 0F , _ ⟩ = nothing
 w ⟨ suc x , y ⟩ = just ⟨ ⟨ inject₁ x , y ⟩ , adjacent-lemm₁ x y ⟩
 
@@ -204,7 +216,7 @@ e {1} {_} ⟨ 0F , _ ⟩ = nothing
 e {suc (suc _)} {_} ⟨ 0F , y ⟩ = just ⟨ ⟨ 1F , y ⟩ , adjacent-lemm₁ 0F y ⟩
 e ⟨ suc x , y ⟩ = Maybe.map (λ{⟨ ⟨ x₁ , y₁ ⟩ , adj ⟩ → ⟨ ⟨ suc x₁ , y₁ ⟩ , adj⇉ adj ⟩}) $ e ⟨ x , y ⟩
 
-nw : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↘ pos₂ pos₁)
+nw : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↖ pos₁ pos₂)
 nw pos = do ⟨ npos , adj₁ ⟩ ← n pos
             ⟨ nwpos , adj₂ ⟩ ← w npos
             just ⟨ nwpos , adjacent→↓↘ adj₂ adj₁ ⟩
@@ -214,7 +226,7 @@ ne pos = do ⟨ epos , adj₁ ⟩ ← e pos
             ⟨ nepos , adj₂ ⟩ ← n epos
             just ⟨ nepos , adjacent→↑↗ adj₁ adj₂ ⟩
 
-sw : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↗ pos₂ pos₁)
+sw : ∀ {width height : ℕ} (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↙ pos₁ pos₂)
 sw pos = do ⟨ spos , adj₁ ⟩ ← s pos
             ⟨ swpos , adj₂ ⟩ ← w spos
             just ⟨ swpos , adjacent→↑↗ adj₂ adj₁ ⟩
