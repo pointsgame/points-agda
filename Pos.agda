@@ -3,21 +3,27 @@
 module Pos where
 
 open import Data.Empty using (⊥-elim)
-open import Data.Fin using (Fin; suc; inject₁; _<_)
+open import Data.Fin using (Fin; suc; inject₁; _<_; _≟_)
 open import Data.Fin.Patterns
 open import Data.Fin.Properties using (<-strictTotalOrder)
 open import Data.Maybe as Maybe using (Maybe; nothing; just; _>>=_)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product.Properties using (≡-dec)
 open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
 open import Function using (_$_; _∘_)
 open import Level using () renaming (zero to ℓ₀)
 open import Relation.Binary using (StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong)
-open import Relation.Nullary using (¬_)
+open import Relation.Nullary using (¬_; Dec)
 
 Pos : ℕ → ℕ → Set
 Pos width height = Fin width × Fin height
+
+_≟ₚₒₛ_ : ∀ {width height : ℕ} (pos₁ pos₂ : Pos width height) → Dec (pos₁ ≡ pos₂)
+_≟ₚₒₛ_ {width} {height} = ≡-dec (_≟_ {width}) (_≟_ {height})
+
+infix 4 _≟ₚₒₛ_
 
 Pos-strictTotalOrder : ∀ {width height : ℕ} → StrictTotalOrder _ _ _
 Pos-strictTotalOrder {width} {height} = ×-strictTotalOrder (<-strictTotalOrder width) (<-strictTotalOrder height)
@@ -289,6 +295,16 @@ rotate dir← = dir↖
 rotate dir↖ = dir↑
 rotate dir↑ = dir↗
 rotate dir↗ = dir→
+
+rotate¬adjacent : Direction → Direction
+rotate¬adjacent dir→ = dir↙
+rotate¬adjacent dir↘ = dir↙
+rotate¬adjacent dir↓ = dir↖
+rotate¬adjacent dir↙ = dir↖
+rotate¬adjacent dir← = dir↗
+rotate¬adjacent dir↖ = dir↗
+rotate¬adjacent dir↑ = dir↙
+rotate¬adjacent dir↗ = dir↙
 
 direction : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Direction
 direction adj→ = dir→
