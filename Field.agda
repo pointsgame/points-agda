@@ -164,3 +164,35 @@ buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
         chain₁ = ⟨ _ , proj₂ (getChain startPos nextPos adj) ⟩
         chain₂ : ∃[ chain ] IsChain chain
         chain₂ = map₂ proj₁ $ flatten (proj₁ chain₁) (proj₂ chain₁)
+
+posInsideRing : Pos → List Pos → Bool
+posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List.reverse ring
+  where open import Data.Fin.Properties using (_≤?_)
+        open import Data.Fin.Patterns
+        open import Data.Fin using (suc)
+        data IntersectionState : Set where
+          is↑ : IntersectionState
+          is↔ : IntersectionState
+          is↓ : IntersectionState
+          is× : IntersectionState
+        intersectionState : Pos → Pos → IntersectionState
+        intersectionState ⟨ x₁ , y₁ ⟩ ⟨ x₂ , y₂ ⟩ = if ⌊ x₁ ≤? x₂ ⌋ then intersectionState‵ y₁ y₂ else is×
+          where intersectionState‵ : ∀ {n} → Fin n → Fin n → IntersectionState
+                intersectionState‵ 0F 0F = is↔
+                intersectionState‵ 1F 0F = is↑
+                intersectionState‵ 0F 1F = is↓
+                intersectionState‵ 0F (suc (suc _)) = is×
+                intersectionState‵ (suc (suc _)) 0F = is×
+                intersectionState‵ (suc y₁) (suc y₂) = intersectionState‵ y₁ y₂
+        firstIntersectionState : List Pos → IntersectionState
+        firstIntersectionState [] = is×
+        firstIntersectionState (pos₂ ∷ tail) with intersectionState pos pos₂
+        ... | is↔ = firstIntersectionState tail
+        ... | is = is
+        intersectionsCount : List Pos → IntersectionState → Bool
+        intersectionsCount [] _ = false
+        intersectionsCount (pos₂ ∷ tail) is with intersectionState pos pos₂
+        intersectionsCount (_ ∷ tail) is↓ | is↑ = not $ intersectionsCount tail is↑
+        intersectionsCount (_ ∷ tail) is↑ | is↓ = not $ intersectionsCount tail is↓
+        intersectionsCount (_ ∷ tail) is | is↔ = intersectionsCount tail is
+        intersectionsCount (_ ∷ tail) _ | is = intersectionsCount tail is
