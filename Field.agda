@@ -10,9 +10,9 @@ open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to 
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Product using (_×_; proj₁; proj₂; map₂; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Function using (_$_; _∘_)
+open import Function using (_$_; _∘_; case_of_)
 open import Generic.Main using (_==_)
-open import Relation.Binary.PropositionalEquality using (refl)
+open import Relation.Binary.PropositionalEquality using (refl; subst)
 open import Relation.Nullary using (_because_; ofʸ)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -126,17 +126,20 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
 IsChain : List Pos → Set
 IsChain = Linked Adjacent
 
+data IsRing : List Pos → Set where
+  ring-init : ∀ {pos₁ pos₂ : Pos} → Adjacent pos₁ pos₂ → IsRing (pos₁ ∷ pos₂ ∷ [])
+  ring-extend : ∀ {pos₁ pos₂ : Pos} {list : List Pos} → IsRing (pos₁ ∷ list) → IsRing (pos₁ ∷ pos₂ ∷ list)
+
 data SameHead {A : Set} : List A → List A → Set where
   []ₛₕ : SameHead [] []
-  _∷ₛₕ_ : ∀ {a : A} (l₁ l₂ : List A) → SameHead (a ∷ l₁) (a ∷ l₂)
+  _&ₛₕ_ : ∀ {a : A} (l₁ l₂ : List A) → SameHead (a ∷ l₁) (a ∷ l₂)
 
 -- Removes intersections from a chain.
--- SameHead is necessary for recursion over linked list.
 flatten : (chain₁ : List Pos) → IsChain chain₁ → ∃[ chain₂ ] (IsChain chain₂ × SameHead chain₁ chain₂)
 flatten [] []ₗ = ⟨ _ , ⟨ []ₗ , []ₛₕ ⟩ ⟩
-flatten (pos ∷ []) [-] = ⟨ pos ∷ [] , ⟨ [-] , [] ∷ₛₕ [] ⟩ ⟩
+flatten (pos ∷ []) [-] = ⟨ pos ∷ [] , ⟨ [-] , [] &ₛₕ [] ⟩ ⟩
 flatten (pos₁ ∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (pos₂ ∷ chain) chainAdj₁
-... | ⟨ .(pos₂ ∷ chain₂) , ⟨ chainAdj₂ , .chain ∷ₛₕ chain₂ ⟩ ⟩ = ⟨ _ , ⟨ proj₂ flattened , (pos₂ ∷ chain) ∷ₛₕ proj₁ flattened ⟩ ⟩
+... | ⟨ .(pos₂ ∷ chain₂) , ⟨ chainAdj₂ , .chain &ₛₕ chain₂ ⟩ ⟩ = ⟨ _ , ⟨ proj₂ flattened , (pos₂ ∷ chain) &ₛₕ proj₁ flattened ⟩ ⟩
   where flatten‵ : (chain₁ : List Pos) → IsChain chain₁ → ∃[ chain₂ ] IsChain (pos₁ ∷ chain₂)
         flatten‵ [] []ₗ = ⟨ pos₂ ∷ chain , adj ∷ₗ chainAdj₁ ⟩
         flatten‵ (pos ∷ []) [-] with pos ≟ₚₒₛ pos₁
@@ -155,15 +158,17 @@ buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
         ... | just ⟨ pos , adj ⟩ = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then ⟨ pos , adj ⟩
                                    else (getNextPlayerPos centerPos $ rotate dir)
-        getChain : (startPos nextPos : Pos) → Adjacent startPos nextPos → ∃[ chain ] IsChain (startPos ∷ chain)
+        getChain : (startPos‵ nextPos‵ : Pos) → Adjacent startPos‵ nextPos‵ → ∃[ chain ] (IsChain (startPos‵ ∷ chain) × IsRing (startPos ∷ chain))
         getChain _ nextPos adj = let ⟨ nextPos‵ , nextAdj ⟩ = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
-                                     ⟨ nextChain , nextChainAdj ⟩ = getChain nextPos nextPos‵ nextAdj
-                                 in if ⌊ nextPos‵ ≟ₚₒₛ startPos ⌋ then ⟨ nextPos ∷ [] , adj ∷ₗ [-] ⟩
-                                    else ⟨ nextPos ∷ nextChain , adj ∷ₗ nextChainAdj ⟩
-        chain₁ : ∃[ chain ] IsChain chain
+                                     ⟨ nextChain , ⟨ nextChainAdj , nextRing ⟩ ⟩ = getChain nextPos nextPos‵ nextAdj
+                                 in case nextPos‵ ≟ₚₒₛ startPos of
+                                    λ { (true because ofʸ proof) → ⟨ nextPos ∷ [] , ⟨ adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj)) ⟩ ⟩
+                                      ; (false because _) → ⟨ nextPos ∷ nextChain , ⟨ adj ∷ₗ nextChainAdj , ring-extend nextRing ⟩ ⟩
+                                      }
+        chain₁ : ∃[ chain ] (IsChain chain × IsRing chain)
         chain₁ = ⟨ _ , proj₂ (getChain startPos nextPos adj) ⟩
         chain₂ : ∃[ chain ] IsChain chain
-        chain₂ = map₂ proj₁ $ flatten (proj₁ chain₁) (proj₂ chain₁)
+        chain₂ = map₂ proj₁ $ flatten (proj₁ chain₁) (proj₁ (proj₂ chain₁))
 
 posInsideRing : Pos → List Pos → Bool
 posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List.reverse ring
