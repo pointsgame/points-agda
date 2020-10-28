@@ -12,7 +12,7 @@ open import Data.Product using (_×_; proj₁; proj₂; map₂; ∃-syntax) rena
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_$_; _∘_; case_of_)
 open import Generic.Main using (_==_)
-open import Relation.Binary.PropositionalEquality using (refl; subst)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Relation.Nullary using (_because_; ofʸ)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -78,7 +78,7 @@ wave startPos f = wave' S.empty (S.singleton startPos)
                              else wave' (unionₛ passed front) (nextFront passed front)
 
 getFirstNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
-getFirstNextPos adj = {!!}
+getFirstNextPos adj = nothing
 
 getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
 getNextPos adj = direction→pos (rotate (direction adj)) _
@@ -123,51 +123,86 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
         square‵ (pos₁ ∷ []) = fiberBundle pos₁ pos
         square‵ (pos₁ ∷ pos₂ ∷ tail) = fiberBundle pos₁ pos₂ + square‵ (pos₂ ∷ tail)
 
+open import Data.List.NonEmpty as NEL using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
+
 IsChain : List Pos → Set
 IsChain = Linked Adjacent
+
+IsChain⁺ : List⁺ Pos → Set
+IsChain⁺ = IsChain ∘ NEL.toList
 
 data IsRing : List Pos → Set where
   ring-init : ∀ {pos₁ pos₂ : Pos} → Adjacent pos₁ pos₂ → IsRing (pos₁ ∷ pos₂ ∷ [])
   ring-extend : ∀ {pos₁ pos₂ : Pos} {list : List Pos} → IsRing (pos₁ ∷ list) → IsRing (pos₁ ∷ pos₂ ∷ list)
 
-data SameHead {A : Set} : List A → List A → Set where
-  []ₛₕ : SameHead [] []
-  _&ₛₕ_ : ∀ {a : A} (l₁ l₂ : List A) → SameHead (a ∷ l₁) (a ∷ l₂)
+IsRing⁺ : List⁺ Pos → Set
+IsRing⁺ = IsRing ∘ NEL.toList
+
+SameHead : {A : Set} → List⁺ A → List⁺ A → Set
+SameHead a b = head a ≡ head b
+
+data SameLast {A : Set} : List⁺ A → List⁺ A → Set where
+  [-]ₛₗ : ∀ {a : A} → SameLast (a ⁺∷ []) (a ⁺∷ [])
+  _∷ₛₗₗ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast (a ∷⁺ l₁) l₂
+  _∷ₛₗᵣ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast l₁ (a ∷⁺ l₂)
+
+same-last-lemm₁ : ∀ {A : Set} {l : List A} {a : A} → SameLast (a ⁺∷ l) (a ⁺∷ l)
+same-last-lemm₁ {l = []} = [-]ₛₗ
+same-last-lemm₁ {l = _ ∷ l} {a = a} = a ∷ₛₗₗ (a ∷ₛₗᵣ same-last-lemm₁)
+
+same-last-lemm₂ : ∀ {A : Set} {l₁ l₂ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₁
+same-last-lemm₂ [-]ₛₗ = [-]ₛₗ
+same-last-lemm₂ (a ∷ₛₗₗ sameLast) = a ∷ₛₗᵣ same-last-lemm₂ sameLast
+same-last-lemm₂ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗₗ same-last-lemm₂ sameLast
+
+same-last-lemm₃ : ∀ {A : Set} {a : A} {l₁ l₂ : List⁺ A} → SameLast (a ∷⁺ l₁) l₂ → SameLast l₁ l₂
+same-last-lemm₃ (_ ∷ₛₗₗ sameLast) = sameLast
+same-last-lemm₃ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗᵣ same-last-lemm₃ sameLast
+
+same-last-lemm₄ : ∀ {A : Set} {l₁ l₂ l₃ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₃ → SameLast l₁ l₃
+same-last-lemm₄ [-]ₛₗ b = b
+same-last-lemm₄ (x ∷ₛₗₗ a) b = x ∷ₛₗₗ same-last-lemm₄ a b
+same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
+same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
 
 -- Removes intersections from a chain.
-flatten : (chain₁ : List Pos) → IsChain chain₁ → ∃[ chain₂ ] (IsChain chain₂ × SameHead chain₁ chain₂)
-flatten [] []ₗ = ⟨ _ , ⟨ []ₗ , []ₛₕ ⟩ ⟩
-flatten (pos ∷ []) [-] = ⟨ pos ∷ [] , ⟨ [-] , [] &ₛₕ [] ⟩ ⟩
-flatten (pos₁ ∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (pos₂ ∷ chain) chainAdj₁
-... | ⟨ .(pos₂ ∷ chain₂) , ⟨ chainAdj₂ , .chain &ₛₕ chain₂ ⟩ ⟩ = ⟨ _ , ⟨ proj₂ flattened , (pos₂ ∷ chain) &ₛₕ proj₁ flattened ⟩ ⟩
-  where flatten‵ : (chain₁ : List Pos) → IsChain chain₁ → ∃[ chain₂ ] IsChain (pos₁ ∷ chain₂)
-        flatten‵ [] []ₗ = ⟨ pos₂ ∷ chain , adj ∷ₗ chainAdj₁ ⟩
-        flatten‵ (pos ∷ []) [-] with pos ≟ₚₒₛ pos₁
-        ... | false because _ = ⟨ pos₂ ∷ chain , adj ∷ₗ chainAdj₁ ⟩
-        ... | true because ofʸ refl = ⟨ [] , [-] ⟩
-        flatten‵ (pos₃ ∷ pos₄ ∷ t) (adj ∷ₗ chainAdj) with pos₃ ≟ₚₒₛ pos₁
-        ... | false because _ = flatten‵ (pos₄ ∷ t) chainAdj
-        ... | true because ofʸ refl = ⟨ pos₄ ∷ t , adj ∷ₗ chainAdj ⟩
-        flattened = flatten‵ (pos₂ ∷ chain₂) chainAdj₂
+flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
+flatten (pos ⁺∷ []) [-] = ⟨ pos ⁺∷ [] , ⟨ [-] , ⟨ refl , [-]ₛₗ ⟩ ⟩ ⟩
+flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (pos₂ ⁺∷ chain) chainAdj₁
+... | ⟨ .pos₂ ⁺∷ chain₂ , ⟨ chainAdj₂ , ⟨ refl , sameLast ⟩ ⟩ ⟩ = ⟨ _
+                                                                  , ⟨ proj₁ (proj₂ flattened)
+                                                                    , ⟨ refl
+                                                                      , pos₁ ∷ₛₗₗ same-last-lemm₄ sameLast (proj₂ (proj₂ flattened))
+                                                                      ⟩
+                                                                    ⟩
+                                                                  ⟩
+  where flatten‵ : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → Maybe (∃[ chain₂ ] (IsChain⁺ (pos₁ ⁺∷ chain₂) × SameLast chain₁ (pos₁ ⁺∷ chain₂)))
+        flatten‵ (pos ⁺∷ []) [-] with pos ≟ₚₒₛ pos₁
+        ... | false because _ = nothing
+        ... | true because ofʸ refl = just ⟨ [] , ⟨ [-] , [-]ₛₗ ⟩ ⟩
+        flatten‵ (pos₃ ⁺∷ pos₄ ∷ t) (adj ∷ₗ chainAdj) with pos₃ ≟ₚₒₛ pos₁
+        ... | false because _ = Maybe.map (λ{⟨ chain , ⟨ isChain , sameLast ⟩ ⟩ → ⟨ chain , ⟨ isChain , pos₃ ∷ₛₗₗ sameLast ⟩ ⟩}) $ flatten‵ (pos₄ ⁺∷ t) chainAdj
+        ... | true because ofʸ refl = just ⟨ pos₄ ∷ t , ⟨ adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁) ⟩ ⟩
+        flattened = Maybe.fromMaybe ⟨ pos₂ ∷ chain , ⟨ adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast ⟩ ⟩ $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
 
 {-# NON_TERMINATING #-}
-buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] IsChain chain)
+buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] IsChain⁺ chain)
 buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
         ... | just ⟨ pos , adj ⟩ = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then ⟨ pos , adj ⟩
                                    else (getNextPlayerPos centerPos $ rotate dir)
-        getChain : (startPos‵ nextPos‵ : Pos) → Adjacent startPos‵ nextPos‵ → ∃[ chain ] (IsChain (startPos‵ ∷ chain) × IsRing (startPos ∷ chain))
+        getChain : (startPos‵ nextPos‵ : Pos) → Adjacent startPos‵ nextPos‵ → ∃[ chain ] (IsChain⁺ (startPos‵ ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
         getChain _ nextPos adj = let ⟨ nextPos‵ , nextAdj ⟩ = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
                                      ⟨ nextChain , ⟨ nextChainAdj , nextRing ⟩ ⟩ = getChain nextPos nextPos‵ nextAdj
                                  in case nextPos‵ ≟ₚₒₛ startPos of
-                                    λ { (true because ofʸ proof) → ⟨ nextPos ∷ [] , ⟨ adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj)) ⟩ ⟩
-                                      ; (false because _) → ⟨ nextPos ∷ nextChain , ⟨ adj ∷ₗ nextChainAdj , ring-extend nextRing ⟩ ⟩
+                                    λ { (true because ofʸ proof) → ⟨ nextPos ⁺∷ [] , ⟨ adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj)) ⟩ ⟩
+                                      ; (false because _) → ⟨ nextPos ∷⁺ nextChain , ⟨ adj ∷ₗ nextChainAdj , ring-extend nextRing ⟩ ⟩
                                       }
-        chain₁ : ∃[ chain ] (IsChain chain × IsRing chain)
+        chain₁ : ∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
         chain₁ = ⟨ _ , proj₂ (getChain startPos nextPos adj) ⟩
-        chain₂ : ∃[ chain ] IsChain chain
+        chain₂ : ∃[ chain ] IsChain⁺ chain
         chain₂ = map₂ proj₁ $ flatten (proj₁ chain₁) (proj₁ (proj₂ chain₁))
 
 posInsideRing : Pos → List Pos → Bool
