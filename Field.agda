@@ -3,9 +3,11 @@ open import Data.Nat as Nat using (ℕ)
 module Field {width height : ℕ} where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_)
+open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; toℕ)
 open import Data.Integer using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
 open import Data.List as List using (List; []; _∷_; _++_)
+open import Data.List.NonEmpty as List⁺ using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
 open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to []ₗ; _∷_ to _∷ₗ_)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Product using (_×_; proj₁; proj₂; map₂; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
@@ -123,20 +125,18 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
         square‵ (pos₁ ∷ []) = fiberBundle pos₁ pos
         square‵ (pos₁ ∷ pos₂ ∷ tail) = fiberBundle pos₁ pos₂ + square‵ (pos₂ ∷ tail)
 
-open import Data.List.NonEmpty as NEL using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
-
 IsChain : List Pos → Set
 IsChain = Linked Adjacent
 
 IsChain⁺ : List⁺ Pos → Set
-IsChain⁺ = IsChain ∘ NEL.toList
+IsChain⁺ = IsChain ∘ List⁺.toList
 
 data IsRing : List Pos → Set where
   ring-init : ∀ {pos₁ pos₂ : Pos} → Adjacent pos₁ pos₂ → IsRing (pos₁ ∷ pos₂ ∷ [])
   ring-extend : ∀ {pos₁ pos₂ : Pos} {list : List Pos} → IsRing (pos₁ ∷ list) → IsRing (pos₁ ∷ pos₂ ∷ list)
 
 IsRing⁺ : List⁺ Pos → Set
-IsRing⁺ = IsRing ∘ NEL.toList
+IsRing⁺ = IsRing ∘ List⁺.toList
 
 SameHead : {A : Set} → List⁺ A → List⁺ A → Set
 SameHead a b = head a ≡ head b
@@ -165,6 +165,14 @@ same-last-lemm₄ (x ∷ₛₗₗ a) b = x ∷ₛₗₗ same-last-lemm₄ a b
 same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
 same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
 
+is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
+is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elim (adjacent-⊥ adj)
+is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ (.pos₁ ∷ₛₗᵣ [-]ₛₗ)) = ring-init adj
+is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗᵣ (.pos₁ ∷ₛₗₗ [-]ₛₗ)) = ring-init adj
+is-ring-lemm {.pos ⁺∷ _ ∷ []} {pos ⁺∷ _ ∷ _ ∷ tail} (ring-init adj) refl sameLast = ring-extend (is-ring-lemm (ring-init adj) refl $
+  same-last-lemm₂ (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ (same-last-lemm₂ sameLast))))
+is-ring-lemm {.pos ⁺∷ _ ∷ _ ∷ ring₁} {pos ⁺∷ ring₂} (ring-extend isRing) refl sameLast = is-ring-lemm isRing refl (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ sameLast))
+
 -- Removes intersections from a chain.
 flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
 flatten (pos ⁺∷ []) [-] = ⟨ pos ⁺∷ [] , ⟨ [-] , ⟨ refl , [-]ₛₗ ⟩ ⟩ ⟩
@@ -186,7 +194,7 @@ flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (
         flattened = Maybe.fromMaybe ⟨ pos₂ ∷ chain , ⟨ adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast ⟩ ⟩ $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
 
 {-# NON_TERMINATING #-}
-buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] IsChain⁺ chain)
+buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
 buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
@@ -200,10 +208,10 @@ buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
                                     λ { (true because ofʸ proof) → ⟨ nextPos ⁺∷ [] , ⟨ adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj)) ⟩ ⟩
                                       ; (false because _) → ⟨ nextPos ∷⁺ nextChain , ⟨ adj ∷ₗ nextChainAdj , ring-extend nextRing ⟩ ⟩
                                       }
-        chain₁ : ∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
+        chain₁ : ∃[ chain ] (IsChain⁺ (startPos ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
         chain₁ = ⟨ _ , proj₂ (getChain startPos nextPos adj) ⟩
-        chain₂ : ∃[ chain ] IsChain⁺ chain
-        chain₂ = map₂ proj₁ $ flatten (proj₁ chain₁) (proj₁ (proj₂ chain₁))
+        chain₂ : ∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
+        chain₂ = map₂ (λ{⟨ isChain , ⟨ refl , sameLast ⟩ ⟩ → ⟨ isChain , is-ring-lemm (proj₂ (proj₂ chain₁)) refl sameLast ⟩ }) $ flatten (startPos ∷⁺ proj₁ chain₁) (proj₁ (proj₂ chain₁))
 
 posInsideRing : Pos → List Pos → Bool
 posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List.reverse ring

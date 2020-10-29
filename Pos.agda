@@ -109,6 +109,11 @@ adjacent↙ : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Ad
 adjacent↙ = adj↔ ∘ adjacent↗
 
 
+adjacent-⊥ : ∀ {width height : ℕ} {pos : Pos width height} → ¬ Adjacent pos pos
+adjacent-⊥ (adj⇉ adj) = adjacent-⊥ adj
+adjacent-⊥ (adj⇊ adj) = adjacent-⊥ adj
+adjacent-⊥ (adj↔ adj) = adjacent-⊥ adj
+
 adjacent-lemm₁ : ∀ {width height : ℕ} (x : Fin width) (y : Fin height) → Adjacent→ (⟨ inject₁ x , y ⟩) ⟨ suc x , y ⟩
 adjacent-lemm₁ 0F 0F = adj→
 adjacent-lemm₁ 0F (suc y) = adj⇊ (adjacent-lemm₁ 0F y)
