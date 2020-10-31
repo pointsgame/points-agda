@@ -1,11 +1,11 @@
-open import Data.Nat as Nat using (ℕ)
+open import Data.Nat as ℕ using (ℕ)
 
 module Field {width height : ℕ} where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; toℕ)
-open import Data.Integer using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
+open import Data.Integer as ℤ using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
 open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
 open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to []ₗ; _∷_ to _∷ₗ_)
@@ -27,11 +27,60 @@ Pos = FinPos width height
 
 open import Data.Tree.AVL.Sets (Pos-strictTotalOrder {width} {height}) as S renaming (⟨Set⟩ to ⟨Set⟩ₚₒₛ)
 
+IsChain : List Pos → Set
+IsChain = Linked Adjacent
+
+IsChain⁺ : List⁺ Pos → Set
+IsChain⁺ = IsChain ∘ List⁺.toList
+
+data IsRing : List Pos → Set where
+  ring-init : ∀ {pos₁ pos₂ : Pos} → Adjacent pos₁ pos₂ → IsRing (pos₁ ∷ pos₂ ∷ [])
+  ring-extend : ∀ {pos₁ pos₂ : Pos} {list : List Pos} → IsRing (pos₁ ∷ list) → IsRing (pos₁ ∷ pos₂ ∷ list)
+
+IsRing⁺ : List⁺ Pos → Set
+IsRing⁺ = IsRing ∘ List⁺.toList
+
+SameHead : {A : Set} → List⁺ A → List⁺ A → Set
+SameHead a b = head a ≡ head b
+
+data SameLast {A : Set} : List⁺ A → List⁺ A → Set where
+  [-]ₛₗ : ∀ {a : A} → SameLast (a ⁺∷ []) (a ⁺∷ [])
+  _∷ₛₗₗ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast (a ∷⁺ l₁) l₂
+  _∷ₛₗᵣ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast l₁ (a ∷⁺ l₂)
+
+same-last-lemm₁ : ∀ {A : Set} {l : List A} {a : A} → SameLast (a ⁺∷ l) (a ⁺∷ l)
+same-last-lemm₁ {l = []} = [-]ₛₗ
+same-last-lemm₁ {l = _ ∷ l} {a = a} = a ∷ₛₗₗ (a ∷ₛₗᵣ same-last-lemm₁)
+
+same-last-lemm₂ : ∀ {A : Set} {l₁ l₂ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₁
+same-last-lemm₂ [-]ₛₗ = [-]ₛₗ
+same-last-lemm₂ (a ∷ₛₗₗ sameLast) = a ∷ₛₗᵣ same-last-lemm₂ sameLast
+same-last-lemm₂ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗₗ same-last-lemm₂ sameLast
+
+same-last-lemm₃ : ∀ {A : Set} {a : A} {l₁ l₂ : List⁺ A} → SameLast (a ∷⁺ l₁) l₂ → SameLast l₁ l₂
+same-last-lemm₃ (_ ∷ₛₗₗ sameLast) = sameLast
+same-last-lemm₃ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗᵣ same-last-lemm₃ sameLast
+
+same-last-lemm₄ : ∀ {A : Set} {l₁ l₂ l₃ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₃ → SameLast l₁ l₃
+same-last-lemm₄ [-]ₛₗ b = b
+same-last-lemm₄ (x ∷ₛₗₗ a) b = x ∷ₛₗₗ same-last-lemm₄ a b
+same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
+same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
+
+is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
+is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elim (adjacent-⊥ adj)
+is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ (.pos₁ ∷ₛₗᵣ [-]ₛₗ)) = ring-init adj
+is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗᵣ (.pos₁ ∷ₛₗₗ [-]ₛₗ)) = ring-init adj
+is-ring-lemm {.pos ⁺∷ _ ∷ []} {pos ⁺∷ _ ∷ _ ∷ tail} (ring-init adj) refl sameLast = ring-extend (is-ring-lemm (ring-init adj) refl $
+  same-last-lemm₂ (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ (same-last-lemm₂ sameLast))))
+is-ring-lemm {.pos ⁺∷ _ ∷ _ ∷ ring₁} {pos ⁺∷ ring₂} (ring-extend isRing) refl sameLast = is-ring-lemm isRing refl (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ sameLast))
+
 record Field : Set where
   field
     scoreRed scoreBlack : ℕ
     moves : List (Pos × Player)
-    lastSurroundChain : Maybe (List Pos × Player)
+    lastSurroundChains : List (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+    lastSurroundPlayer : Player
     points : Pos → Point
 
 isPuttingAllowed : Field → Pos → Bool
@@ -49,11 +98,15 @@ isPlayer record { points = points } pos player with points pos
 isPlayersPoint : Field → Pos → Player → Bool
 isPlayersPoint record { points = points } pos player = points pos == PlayerPoint player
 
+isCapturedPoint : Field → Pos → Player → Bool
+isCapturedPoint record { points = points } pos player = points pos == BasePoint (next player) true
+
 emptyField : Field
 emptyField = record { scoreRed = 0
                     ; scoreBlack = 0
                     ; moves = []
-                    ; lastSurroundChain = nothing
+                    ; lastSurroundChains = []
+                    ; lastSurroundPlayer = Red
                     ; points = λ _ → EmptyPoint
                     }
 
@@ -124,54 +177,6 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
         square‵ [] = 0ℤ
         square‵ (pos₁ ∷ []) = fiberBundle pos₁ pos
         square‵ (pos₁ ∷ pos₂ ∷ tail) = fiberBundle pos₁ pos₂ + square‵ (pos₂ ∷ tail)
-
-IsChain : List Pos → Set
-IsChain = Linked Adjacent
-
-IsChain⁺ : List⁺ Pos → Set
-IsChain⁺ = IsChain ∘ List⁺.toList
-
-data IsRing : List Pos → Set where
-  ring-init : ∀ {pos₁ pos₂ : Pos} → Adjacent pos₁ pos₂ → IsRing (pos₁ ∷ pos₂ ∷ [])
-  ring-extend : ∀ {pos₁ pos₂ : Pos} {list : List Pos} → IsRing (pos₁ ∷ list) → IsRing (pos₁ ∷ pos₂ ∷ list)
-
-IsRing⁺ : List⁺ Pos → Set
-IsRing⁺ = IsRing ∘ List⁺.toList
-
-SameHead : {A : Set} → List⁺ A → List⁺ A → Set
-SameHead a b = head a ≡ head b
-
-data SameLast {A : Set} : List⁺ A → List⁺ A → Set where
-  [-]ₛₗ : ∀ {a : A} → SameLast (a ⁺∷ []) (a ⁺∷ [])
-  _∷ₛₗₗ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast (a ∷⁺ l₁) l₂
-  _∷ₛₗᵣ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast l₁ (a ∷⁺ l₂)
-
-same-last-lemm₁ : ∀ {A : Set} {l : List A} {a : A} → SameLast (a ⁺∷ l) (a ⁺∷ l)
-same-last-lemm₁ {l = []} = [-]ₛₗ
-same-last-lemm₁ {l = _ ∷ l} {a = a} = a ∷ₛₗₗ (a ∷ₛₗᵣ same-last-lemm₁)
-
-same-last-lemm₂ : ∀ {A : Set} {l₁ l₂ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₁
-same-last-lemm₂ [-]ₛₗ = [-]ₛₗ
-same-last-lemm₂ (a ∷ₛₗₗ sameLast) = a ∷ₛₗᵣ same-last-lemm₂ sameLast
-same-last-lemm₂ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗₗ same-last-lemm₂ sameLast
-
-same-last-lemm₃ : ∀ {A : Set} {a : A} {l₁ l₂ : List⁺ A} → SameLast (a ∷⁺ l₁) l₂ → SameLast l₁ l₂
-same-last-lemm₃ (_ ∷ₛₗₗ sameLast) = sameLast
-same-last-lemm₃ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗᵣ same-last-lemm₃ sameLast
-
-same-last-lemm₄ : ∀ {A : Set} {l₁ l₂ l₃ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₃ → SameLast l₁ l₃
-same-last-lemm₄ [-]ₛₗ b = b
-same-last-lemm₄ (x ∷ₛₗₗ a) b = x ∷ₛₗₗ same-last-lemm₄ a b
-same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
-same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
-
-is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
-is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elim (adjacent-⊥ adj)
-is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ (.pos₁ ∷ₛₗᵣ [-]ₛₗ)) = ring-init adj
-is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗᵣ (.pos₁ ∷ₛₗₗ [-]ₛₗ)) = ring-init adj
-is-ring-lemm {.pos ⁺∷ _ ∷ []} {pos ⁺∷ _ ∷ _ ∷ tail} (ring-init adj) refl sameLast = ring-extend (is-ring-lemm (ring-init adj) refl $
-  same-last-lemm₂ (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ (same-last-lemm₂ sameLast))))
-is-ring-lemm {.pos ⁺∷ _ ∷ _ ∷ ring₁} {pos ⁺∷ ring₂} (ring-extend isRing) refl sameLast = is-ring-lemm isRing refl (pos ∷ₛₗₗ same-last-lemm₃ (same-last-lemm₃ sameLast))
 
 -- Removes intersections from a chain.
 flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
@@ -244,3 +249,103 @@ posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List
         intersectionsCount (_ ∷ tail) is↑ | is↓ = not $ intersectionsCount tail is↓
         intersectionsCount (_ ∷ tail) is | is↔ = intersectionsCount tail is
         intersectionsCount (_ ∷ tail) _ | is = intersectionsCount tail is
+
+getInsideRing : Pos → List Pos -> ⟨Set⟩ₚₒₛ
+getInsideRing startPos ring =
+  let ringSet = S.fromList ring
+  in wave startPos (not ∘ (S._∈? ringSet))
+
+{-# NON_TERMINATING #-}
+getEmptyBaseChain : Field → Pos -> Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
+  where getEmptyBaseChain‵ : Pos → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+        getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
+                                 else let inputPoints = getInputPoints fld pos player
+                                          chains = List.mapMaybe (λ{⟨ ⟨ chainPos , adj ⟩ , _ ⟩ -> buildChain fld pos chainPos adj player}) inputPoints
+                                          result = List.head $ List.boolFilter (posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
+                                      in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁))
+
+capture : Player → Point → Point
+capture player EmptyPoint = BasePoint player false
+capture player (PlayerPoint player‵) = if player‵ == player
+                                       then PlayerPoint player‵
+                                       else BasePoint player true
+capture player (BasePoint player‵ enemy) = if player‵ == player
+                                           then BasePoint player‵ enemy
+                                           else (if enemy
+                                                 then PlayerPoint player
+                                                 else BasePoint player false)
+capture player (EmptyBasePoint _) = BasePoint player false
+
+putPoint : Pos → Player → Field → Field -- TODO: isPuttingAllowed cond
+putPoint pos player fld =
+  let enemyPlayer = next player
+      point = Field.points fld pos
+      enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
+      enemyEmptyBase = Maybe.maybe′ (λ{⟨ chain , _ ⟩ → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
+      inputPoints = getInputPoints fld pos player
+      captures = List.mapMaybe (λ{⟨ ⟨ chainPos , chainAdj ⟩ , ⟨ capturedPos , _ ⟩ ⟩ →
+        Maybe.map (λ chain → ⟨ chain
+                             , S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ chain
+                             ⟩) (buildChain fld pos chainPos chainAdj player)}) inputPoints
+      capturedCount = List.length ∘ List.boolFilter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer)
+      freedCount = List.length ∘ List.boolFilter (λ pos‵ → isCapturedPoint fld pos‵ player)
+      ⟨ emptyCaptures , realCaptures ⟩ = List.boolPartition (λ{⟨ _ , captured ⟩ → ⌊ capturedCount captured ℕ.≟ 0 ⌋}) captures
+      capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
+      freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
+      newEmptyBase = S.fromList $ List.boolFilter (λ pos‵ → Field.points fld pos‵ == EmptyPoint) $ List.concatMap proj₂ emptyCaptures
+      realCaptured = List.concatMap proj₂ realCaptures
+      newScoreRed = if player == Red then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
+      newScoreBlack = if player == Black then Field.scoreBlack fld ℕ.+ capturedTotal else Field.scoreBlack fld ℕ.∸ freedTotal
+      newMoves = ⟨ pos , player ⟩ ∷ Field.moves fld
+  in if point == EmptyBasePoint enemyPlayer
+     then if not $ List.null captures
+          then record
+               { scoreRed = newScoreRed
+               ; scoreBlack = newScoreBlack
+               ; moves = newMoves
+               ; lastSurroundChains = List.map proj₁ realCaptures
+               ; lastSurroundPlayer = player
+               ; points = λ pos‵ → if ⌊ pos‵ ≟ₚₒₛ pos ⌋
+                                   then PlayerPoint player
+                                   else (if pos‵ ∈? enemyEmptyBase
+                                         then EmptyPoint
+                                         else (if pos‵ ∈? (S.fromList realCaptured)
+                                               then capture player $ Field.points fld pos‵
+                                               else Field.points fld pos‵))
+               }
+          else record
+               { scoreRed = if player == Red then Field.scoreRed fld else Field.scoreRed fld ℕ.+ 1
+               ; scoreBlack = if player == Black then Field.scoreBlack fld else Field.scoreBlack fld ℕ.+ 1
+               ; moves = newMoves
+               ; lastSurroundChains = List.fromMaybe enemyEmptyBaseChain
+               ; lastSurroundPlayer = enemyPlayer
+               ; points = λ pos‵ → if ⌊ pos‵ ≟ₚₒₛ pos ⌋
+                                   then BasePoint enemyPlayer true
+                                   else (if pos‵ ∈? enemyEmptyBase
+                                         then BasePoint enemyPlayer false
+                                         else Field.points fld pos‵)
+               }
+     else (if point == EmptyBasePoint player
+           then record
+                { Field fld
+                ; moves = newMoves
+                ; lastSurroundChains = []
+                ; points = λ pos‵ → if ⌊ pos‵ ≟ₚₒₛ pos ⌋
+                                    then PlayerPoint player
+                                    else Field.points fld pos‵
+                }
+           else record
+                { scoreRed = newScoreRed
+                ; scoreBlack = newScoreBlack
+                ; moves = newMoves
+                ; lastSurroundChains = List.map proj₁ realCaptures
+                ; lastSurroundPlayer = player
+                ; points = λ pos‵ → if ⌊ pos‵ ≟ₚₒₛ pos ⌋
+                                    then PlayerPoint player
+                                    else (if pos‵ ∈? newEmptyBase
+                                          then EmptyBasePoint player
+                                          else (if pos‵ ∈? (S.fromList realCaptured)
+                                                then capture player $ Field.points fld pos‵
+                                                else Field.points fld pos‵))
+                })
