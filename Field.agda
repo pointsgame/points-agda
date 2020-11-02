@@ -25,6 +25,7 @@ open import Pos renaming (Pos to FinPos)
 Pos : Set
 Pos = FinPos width height
 
+open import Data.Tree.AVL (Pos-strictTotalOrder {width} {height}) as AVL using ()
 open import Data.Tree.AVL.Sets (Pos-strictTotalOrder {width} {height}) as S renaming (⟨Set⟩ to ⟨Set⟩ₚₒₛ)
 
 IsChain : List Pos → Set
@@ -113,11 +114,7 @@ emptyField = record { scoreRed = 0
 {-# TERMINATING #-}
 wave : Pos → (Pos → Bool) → ⟨Set⟩ₚₒₛ
 wave startPos f = wave' S.empty (S.singleton startPos)
-  where nullₛ : ⟨Set⟩ₚₒₛ → Bool
-        nullₛ s = List.null (S.toList s)
-        unionₛ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
-        unionₛ set₁ set₂ = List.foldl (Function.flip S.insert) set₁ (S.toList set₂)
-        _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
+  where _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         _\\ₛ_ set₁ set₂ = List.foldl (Function.flip S.delete) set₁ (S.toList set₂)
         neighborhood : Pos → List Pos
         neighborhood pos = List.mapMaybe (Maybe.map proj₁) $ n‵ pos
@@ -128,9 +125,9 @@ wave startPos f = wave' S.empty (S.singleton startPos)
         nextFront : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         nextFront passed front = (S.fromList $ List.boolFilter f $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
         wave' : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
-        wave' passed front = if nullₛ front
+        wave' passed front = if List.null (S.toList front)
                              then passed
-                             else wave' (unionₛ passed front) (nextFront passed front)
+                             else wave' (AVL.union passed front) (nextFront passed front)
 
 getFirstNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
 getFirstNextPos adj = nothing
