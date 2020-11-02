@@ -110,7 +110,7 @@ emptyField = record { scoreRed = 0
                     ; points = λ _ → EmptyPoint
                     }
 
-{-# NON_TERMINATING #-}
+{-# TERMINATING #-}
 wave : Pos → (Pos → Bool) → ⟨Set⟩ₚₒₛ
 wave startPos f = wave' S.empty (S.singleton startPos)
   where nullₛ : ⟨Set⟩ₚₒₛ → Bool
@@ -198,7 +198,7 @@ flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (
         ... | true because ofʸ refl = just ⟨ pos₄ ∷ t , ⟨ adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁) ⟩ ⟩
         flattened = Maybe.fromMaybe ⟨ pos₂ ∷ chain , ⟨ adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast ⟩ ⟩ $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
 
-{-# NON_TERMINATING #-}
+{-# TERMINATING #-}
 buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
 buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
@@ -255,7 +255,7 @@ getInsideRing startPos ring =
   let ringSet = S.fromList ring
   in wave startPos (not ∘ (S._∈? ringSet))
 
-{-# NON_TERMINATING #-}
+{-# TERMINATING #-}
 getEmptyBaseChain : Field → Pos -> Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
 getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
   where getEmptyBaseChain‵ : Pos → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
