@@ -197,7 +197,7 @@ flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (
 
 {-# TERMINATING #-}
 buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-buildChain fld startPos nextPos adj player = just chain₂ -- TODO: check square
+buildChain fld startPos nextPos adj player = if ⌊ 0ℤ ℤ.<? square (List⁺.toList (proj₁ chain₂)) ⌋ then just chain₂ else nothing
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
