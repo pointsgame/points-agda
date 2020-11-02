@@ -308,8 +308,8 @@ rotate¬adjacent dir↓ = dir↖
 rotate¬adjacent dir↙ = dir↖
 rotate¬adjacent dir← = dir↗
 rotate¬adjacent dir↖ = dir↗
-rotate¬adjacent dir↑ = dir↙
-rotate¬adjacent dir↗ = dir↙
+rotate¬adjacent dir↑ = dir↘
+rotate¬adjacent dir↗ = dir↘
 
 direction : ∀ {width height : ℕ} {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Direction
 direction adj→ = dir→
