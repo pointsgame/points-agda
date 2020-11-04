@@ -10,7 +10,7 @@ open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
 open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to []ₗ; _∷_ to _∷ₗ_)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
-open import Data.Product using (_×_; proj₁; proj₂; map₂; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; _,_; proj₁; proj₂; map₂; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_$_; _∘_; case_of_)
 open import Generic.Main using (_==_)
@@ -138,7 +138,7 @@ getNextPos adj = direction→pos (rotate (direction adj)) _
 getInputPoints : Field → (pos : Pos) → Player → List (∃[ chainPos ] Adjacent pos chainPos × ∃[ capturedPos ] Adjacent pos capturedPos)
 getInputPoints fld pos player =
   let isDirectionPlayer : ((pos₁ : Pos) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)) → Bool
-      isDirectionPlayer dir = Maybe.maybe′ (λ{⟨ dirPos , _ ⟩ → isPlayer fld dirPos player}) false $ dir pos
+      isDirectionPlayer dir = Maybe.maybe′ (λ{(dirPos , _) → isPlayer fld dirPos player}) false $ dir pos
       list₁ = if not $ isDirectionPlayer w‵ then
                 if isDirectionPlayer sw‵ then List.fromMaybe (Maybe.zip (sw‵ pos) (w‵ pos))
                 else if isDirectionPlayer s‵ then List.fromMaybe (Maybe.zip (s‵ pos) (w‵ pos))
@@ -169,7 +169,7 @@ square : List Pos → ℤ
 square [] = 0ℤ
 square (pos ∷ tail) = square‵ $ pos ∷ tail
   where fiberBundle : Pos → Pos → ℤ
-        fiberBundle ⟨ x₁ , y₁ ⟩ ⟨ x₂ , y₂ ⟩ = + toℕ x₁ * + toℕ y₂ - + toℕ y₁ * + toℕ x₂
+        fiberBundle (x₁ , y₁) (x₂ , y₂) = + toℕ x₁ * + toℕ y₂ - + toℕ y₁ * + toℕ x₂
         square‵ : List Pos → ℤ
         square‵ [] = 0ℤ
         square‵ (pos₁ ∷ []) = fiberBundle pos₁ pos
@@ -177,23 +177,17 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
 
 -- Removes intersections from a chain.
 flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
-flatten (pos ⁺∷ []) [-] = ⟨ pos ⁺∷ [] , ⟨ [-] , ⟨ refl , [-]ₛₗ ⟩ ⟩ ⟩
+flatten (pos ⁺∷ []) [-] = (pos ⁺∷ [] , ([-] , (refl , [-]ₛₗ)))
 flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (pos₂ ⁺∷ chain) chainAdj₁
-... | ⟨ .pos₂ ⁺∷ chain₂ , ⟨ chainAdj₂ , ⟨ refl , sameLast ⟩ ⟩ ⟩ = ⟨ _
-                                                                  , ⟨ proj₁ (proj₂ flattened)
-                                                                    , ⟨ refl
-                                                                      , pos₁ ∷ₛₗₗ same-last-lemm₄ sameLast (proj₂ (proj₂ flattened))
-                                                                      ⟩
-                                                                    ⟩
-                                                                  ⟩
+... | (.pos₂ ⁺∷ chain₂ , (chainAdj₂ , (refl , sameLast))) = (_ , (proj₁ (proj₂ flattened) , (refl , pos₁ ∷ₛₗₗ same-last-lemm₄ sameLast (proj₂ (proj₂ flattened)))))
   where flatten‵ : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → Maybe (∃[ chain₂ ] (IsChain⁺ (pos₁ ⁺∷ chain₂) × SameLast chain₁ (pos₁ ⁺∷ chain₂)))
         flatten‵ (pos ⁺∷ []) [-] with pos ≟ₚₒₛ pos₁
         ... | false because _ = nothing
-        ... | true because ofʸ refl = just ⟨ [] , ⟨ [-] , [-]ₛₗ ⟩ ⟩
+        ... | true because ofʸ refl = just ([] , ([-] , [-]ₛₗ))
         flatten‵ (pos₃ ⁺∷ pos₄ ∷ t) (adj ∷ₗ chainAdj) with pos₃ ≟ₚₒₛ pos₁
-        ... | false because _ = Maybe.map (λ{⟨ chain , ⟨ isChain , sameLast ⟩ ⟩ → ⟨ chain , ⟨ isChain , pos₃ ∷ₛₗₗ sameLast ⟩ ⟩}) $ flatten‵ (pos₄ ⁺∷ t) chainAdj
-        ... | true because ofʸ refl = just ⟨ pos₄ ∷ t , ⟨ adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁) ⟩ ⟩
-        flattened = Maybe.fromMaybe ⟨ pos₂ ∷ chain , ⟨ adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast ⟩ ⟩ $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
+        ... | false because _ = Maybe.map (λ{(chain , (isChain , sameLast)) → (chain , (isChain , pos₃ ∷ₛₗₗ sameLast))}) $ flatten‵ (pos₄ ⁺∷ t) chainAdj
+        ... | true because ofʸ refl = just (pos₄ ∷ t , (adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁)))
+        flattened = Maybe.fromMaybe (pos₂ ∷ chain , (adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast)) $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
 
 {-# TERMINATING #-}
 buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
@@ -201,19 +195,19 @@ buildChain fld startPos nextPos adj player = if ⌊ 0ℤ ℤ.<? square (List⁺.
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
-        ... | just ⟨ pos , adj ⟩ = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then ⟨ pos , adj ⟩
-                                   else (getNextPlayerPos centerPos $ rotate dir)
+        ... | just (pos , adj) = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then (pos , adj)
+                                 else (getNextPlayerPos centerPos $ rotate dir)
         getChain : (startPos‵ nextPos‵ : Pos) → Adjacent startPos‵ nextPos‵ → ∃[ chain ] (IsChain⁺ (startPos‵ ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
-        getChain _ nextPos adj = let ⟨ nextPos‵ , nextAdj ⟩ = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
-                                     ⟨ nextChain , ⟨ nextChainAdj , nextRing ⟩ ⟩ = getChain nextPos nextPos‵ nextAdj
+        getChain _ nextPos adj = let (nextPos‵ , nextAdj) = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
+                                     (nextChain , (nextChainAdj , nextRing)) = getChain nextPos nextPos‵ nextAdj
                                  in case nextPos‵ ≟ₚₒₛ startPos of
-                                    λ { (true because ofʸ proof) → ⟨ nextPos ⁺∷ [] , ⟨ adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj)) ⟩ ⟩
-                                      ; (false because _) → ⟨ nextPos ∷⁺ nextChain , ⟨ adj ∷ₗ nextChainAdj , ring-extend nextRing ⟩ ⟩
+                                    λ { (true because ofʸ proof) → (nextPos ⁺∷ [] , (adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj))))
+                                      ; (false because _) → (nextPos ∷⁺ nextChain , (adj ∷ₗ nextChainAdj , ring-extend nextRing))
                                       }
         chain₁ : ∃[ chain ] (IsChain⁺ (startPos ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
-        chain₁ = ⟨ _ , proj₂ (getChain startPos nextPos adj) ⟩
+        chain₁ = (_ , proj₂ (getChain startPos nextPos adj))
         chain₂ : ∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
-        chain₂ = map₂ (λ{⟨ isChain , ⟨ refl , sameLast ⟩ ⟩ → ⟨ isChain , is-ring-lemm (proj₂ (proj₂ chain₁)) refl sameLast ⟩ }) $ flatten (startPos ∷⁺ proj₁ chain₁) (proj₁ (proj₂ chain₁))
+        chain₂ = map₂ (λ{(isChain , (refl , sameLast)) → (isChain , is-ring-lemm (proj₂ (proj₂ chain₁)) refl sameLast) }) $ flatten (startPos ∷⁺ proj₁ chain₁) (proj₁ (proj₂ chain₁))
 
 posInsideRing : Pos → List Pos → Bool
 posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List.reverse ring
@@ -226,7 +220,7 @@ posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List
           is↓ : IntersectionState
           is× : IntersectionState
         intersectionState : Pos → Pos → IntersectionState
-        intersectionState ⟨ x₁ , y₁ ⟩ ⟨ x₂ , y₂ ⟩ = if ⌊ x₁ ≤? x₂ ⌋ then intersectionState‵ y₁ y₂ else is×
+        intersectionState (x₁ , y₁) (x₂ , y₂) = if ⌊ x₁ ≤? x₂ ⌋ then intersectionState‵ y₁ y₂ else is×
           where intersectionState‵ : ∀ {n} → Fin n → Fin n → IntersectionState
                 intersectionState‵ 0F 0F = is↔
                 intersectionState‵ 1F 0F = is↑
@@ -258,7 +252,7 @@ getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChai
   where getEmptyBaseChain‵ : Pos → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
         getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
                                  else let inputPoints = getInputPoints fld pos player
-                                          chains = List.mapMaybe (λ{⟨ ⟨ chainPos , adj ⟩ , _ ⟩ -> buildChain fld pos chainPos adj player}) inputPoints
+                                          chains = List.mapMaybe (λ{((chainPos , adj) , _) -> buildChain fld pos chainPos adj player}) inputPoints
                                           result = List.head $ List.boolFilter (posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
                                       in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁))
 
@@ -279,22 +273,21 @@ putPoint pos player fld =
   let enemyPlayer = next player
       point = Field.points fld pos
       enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
-      enemyEmptyBase = Maybe.maybe′ (λ{⟨ chain , _ ⟩ → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
+      enemyEmptyBase = Maybe.maybe′ (λ{(chain , _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
       inputPoints = getInputPoints fld pos player
-      captures = List.mapMaybe (λ{⟨ ⟨ chainPos , chainAdj ⟩ , ⟨ capturedPos , _ ⟩ ⟩ →
-        Maybe.map (λ chain → ⟨ chain
-                             , S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ chain
-                             ⟩) (buildChain fld pos chainPos chainAdj player)}) inputPoints
+      captures = List.mapMaybe (λ{((chainPos , chainAdj) , (capturedPos , _)) →
+        Maybe.map (λ chain →
+          (chain , (S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ chain))) (buildChain fld pos chainPos chainAdj player)}) inputPoints
       capturedCount = List.length ∘ List.boolFilter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer)
       freedCount = List.length ∘ List.boolFilter (λ pos‵ → isCapturedPoint fld pos‵ player)
-      ⟨ emptyCaptures , realCaptures ⟩ = List.boolPartition (λ{⟨ _ , captured ⟩ → ⌊ capturedCount captured ℕ.≟ 0 ⌋}) captures
+      (emptyCaptures , realCaptures) = List.boolPartition (λ{(_ , captured) → ⌊ capturedCount captured ℕ.≟ 0 ⌋}) captures
       capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
       freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
       newEmptyBase = S.fromList $ List.boolFilter (λ pos‵ → Field.points fld pos‵ == EmptyPoint) $ List.concatMap proj₂ emptyCaptures
       realCaptured = List.concatMap proj₂ realCaptures
       newScoreRed = if player == Red then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
       newScoreBlack = if player == Black then Field.scoreBlack fld ℕ.+ capturedTotal else Field.scoreBlack fld ℕ.∸ freedTotal
-      newMoves = ⟨ pos , player ⟩ ∷ Field.moves fld
+      newMoves = (pos , player) ∷ Field.moves fld
   in if point == EmptyBasePoint enemyPlayer
      then if not $ List.null captures
           then record
