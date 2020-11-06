@@ -268,8 +268,8 @@ capture player (BasePoint player‵ enemy) = if player‵ == player
                                                  else BasePoint player false)
 capture player (EmptyBasePoint _) = BasePoint player false
 
-putPoint : Pos → Player → Field → Field -- TODO: isPuttingAllowed cond
-putPoint pos player fld =
+putPoint : (pos : Pos) → Player → (fld : Field) → Bool.T (isPuttingAllowed fld pos) → Field
+putPoint pos player fld _ =
   let enemyPlayer = next player
       point = Field.points fld pos
       enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
