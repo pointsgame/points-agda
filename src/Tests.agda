@@ -64,8 +64,8 @@ _ = refl
 _ : Field.scoreBlack simpleSurround ≡ 0
 _ = refl
 
-_ : isPuttingAllowed simpleSurround ⟨ 0F , 0F ⟩ ≡ true
+_ : isPuttingAllowed simpleSurround (0F , 0F) ≡ true
 _ = refl
 
-_ : isPuttingAllowed simpleSurround ⟨ 1F , 1F ⟩ ≡ false
+_ : isPuttingAllowed simpleSurround (1F , 1F) ≡ false
 _ = refl
