@@ -5,9 +5,12 @@ open import Data.Bool.Properties using (T?)
 open import Data.Char as Char using (Char)
 open import Data.Fin using (Fin)
 open import Data.List as List using (List; []; _∷_)
+open import Data.List.Sort.MergeSort as Sort
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Nat using (ℕ; _≤?_)
-open import Data.Product using (_×_; _,_)
+open import Data.Nat.Properties as NatProperties
+open import Data.Product using (_×_; _,_; proj₁)
+open import Relation.Binary.Construct.On as On
 open import Data.String as String using (String)
 open import Function using (_$_; _∘_; case_of_)
 open import Relation.Nullary using (_because_; ofʸ)
@@ -21,15 +24,6 @@ record GenField : Set where
     width height : ℕ
     fld : Field {width} {height}
 
-insert : ∀ {width height} → List (Char × Fin width × Fin height) → (Char × Fin width × Fin height) → List (Char × Fin width × Fin height)
-insert [] n = n ∷ []
-insert (h @ (hc , _) ∷ l) e @ (ec , _) with Char.toℕ (Char.toLower ec) ≤? Char.toℕ (Char.toLower hc)
-... | false because _ = e ∷ h ∷ l
-... | true because _ = h ∷ insert l e
-
-sort : ∀ {width height} → List (Char × Fin width × Fin height) → List (Char × Fin width × Fin height)
-sort = List.foldl insert []
-
 constructField : String → Maybe GenField
 constructField image with List.filter (λ s → ¬? (s String.≟ "")) $ String.wordsBy (Char._≟ '\n') image
 ... | [] = nothing
@@ -37,7 +31,7 @@ constructField image with List.filter (λ s → ¬? (s String.≟ "")) $ String.
   let width = String.length h
       height = List.length lines
       moves = List.map (λ{(c , pos) → (if Char.isLower c then Red else Black) , pos}) $
-              sort $
+              Sort.sort (On.decTotalOrder NatProperties.≤-decTotalOrder (Char.toℕ ∘ Char.toLower ∘ proj₁)) $
               List.filter (λ{(c , _) → ¬? (Char.toLower c Char.≟ Char.toUpper c)}) $
               List.concatMap (λ{(line , y) → List.map (λ{(c , x) → c , x , y}) $
                                              List.zip (String.toList line) $
