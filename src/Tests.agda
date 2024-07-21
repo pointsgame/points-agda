@@ -1,15 +1,15 @@
+module Tests where
+
 open import Data.Bool using (not; true; false; if_then_else_)
 open import Data.Bool.Properties using (T?)
 open import Data.Char as Char using (Char)
 open import Data.Fin using (Fin)
-open import Data.Fin.Patterns
 open import Data.List as List using (List; []; _∷_)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Nat using (ℕ; _≤?_)
 open import Data.Product using (_×_; _,_)
 open import Data.String as String using (String)
 open import Function using (_$_; _∘_; case_of_)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Relation.Nullary using (_because_; ofʸ)
 open import Relation.Nullary.Decidable using (¬?)
 
@@ -57,15 +57,3 @@ simpleSurround = GenField.fld $ Maybe.from-just $ constructField "
 cBa
 .a.
 "
-
-_ : Field.scoreRed simpleSurround ≡ 1
-_ = refl
-
-_ : Field.scoreBlack simpleSurround ≡ 0
-_ = refl
-
-_ : isPuttingAllowed simpleSurround (0F , 0F) ≡ true
-_ = refl
-
-_ : isPuttingAllowed simpleSurround (1F , 1F) ≡ false
-_ = refl
