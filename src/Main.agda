@@ -55,9 +55,144 @@ movePriorityBig = test "move priority, big" $ Maybe.maybe′ (λ genField →
     ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 2 ⌋
   ) false movePriorityBigImage
 
+onionSurroundings : IO {0ℓ} ⊤
+onionSurroundings = test "onion surroundings" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 4 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false onionSurroundingsImage
+
+deepOnionSurroundings : IO {0ℓ} ⊤
+deepOnionSurroundings = test "deep onion surroundings" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 0 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 9 ⌋
+  ) false deepOnionSurroundingsImage
+
+applyControlSurroundingInSameTurn : IO {0ℓ} ⊤
+applyControlSurroundingInSameTurn = test "apply 'control' surrounding in same turn" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false applyControlSurroundingInSameTurnImage
+
+doubleSurround : IO {0ℓ} ⊤
+doubleSurround = test "double surround" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 2 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false doubleSurroundImage
+
+doubleSurroundWithEmptyPart : IO {0ℓ} ⊤
+doubleSurroundWithEmptyPart = test "double surround with empty part" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false doubleSurroundWithEmptyPartImage
+
+shouldNotLeaveEmptyInside : IO {0ℓ} ⊤
+shouldNotLeaveEmptyInside = test "should not leave empty inside" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false shouldNotLeaveEmptyInsideImage
+
+surroundInOppositeTurn : IO {0ℓ} ⊤
+surroundInOppositeTurn = test "surround in opposite turn" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false surroundInOppositeTurnImage
+
+partlySurroundInOppositeTurn : IO {0ℓ} ⊤
+partlySurroundInOppositeTurn = test "partly surround in opposite turn" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false partlySurroundInOppositeTurnImage
+
+holeInsideSurrounding : IO {0ℓ} ⊤
+holeInsideSurrounding = test "a hole inside a surrounding" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false holeInsideSurroundingImage
+
+holeInsideSurroundingAfterOppositeTurnSurrounding : IO {0ℓ} ⊤
+holeInsideSurroundingAfterOppositeTurnSurrounding = test "a hole inside a surrounding, after opposite turn surrounding" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false holeInsideSurroundingAfterOppositeTurnSurroundingImage
+
+surroundingDoesNotExpand : IO {0ℓ} ⊤
+surroundingDoesNotExpand = test "surrounding does not expand" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false surroundingDoesNotExpandImage
+
+twoSurroundingsWithCommonBorder : IO {0ℓ} ⊤
+twoSurroundingsWithCommonBorder = test "2 surroundings with common border" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 2 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false twoSurroundingsWithCommonBorderImage
+
+twoSurroundingsWithCommonDot : IO {0ℓ} ⊤
+twoSurroundingsWithCommonDot = test "2 surroundings with common dot" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 2 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false twoSurroundingsWithCommonDotImage
+
+threeSurroundingsWithCommonBorders : IO {0ℓ} ⊤
+threeSurroundingsWithCommonBorders = test "3 surroundings with common borders" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 3 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false threeSurroundingsWithCommonBordersImage
+
+twoSurroundingsWithCommonDotOneBorderlineEmptyPlace : IO {0ℓ} ⊤
+twoSurroundingsWithCommonDotOneBorderlineEmptyPlace = test "2 surroundings with common dot, one borderline empty place" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 2 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false twoSurroundingsWithCommonDotOneBorderlineEmptyPlaceImage
+
 main : Main
 main = run do
   simpleSurround
   surroundEmptyTerritory
   movePriority
   movePriorityBig
+  onionSurroundings
+  deepOnionSurroundings
+  applyControlSurroundingInSameTurn
+  doubleSurround
+  doubleSurroundWithEmptyPart
+  shouldNotLeaveEmptyInside
+  surroundInOppositeTurn
+  partlySurroundInOppositeTurn
+  holeInsideSurrounding
+  holeInsideSurroundingAfterOppositeTurnSurrounding
+  surroundingDoesNotExpand
+  twoSurroundingsWithCommonBorder
+  twoSurroundingsWithCommonDot
+  threeSurroundingsWithCommonBorders
+  twoSurroundingsWithCommonDotOneBorderlineEmptyPlace
