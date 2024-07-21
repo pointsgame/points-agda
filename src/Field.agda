@@ -128,37 +128,31 @@ wave startPos f = wave' S.empty (S.singleton startPos)
                              then passed
                              else wave' (AVL.union passed front) (nextFront passed front)
 
-getFirstNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
-getFirstNextPos adj = nothing
-
-getNextPos : {centerPos pos : Pos} → Adjacent centerPos pos → Maybe (∃[ nextPos ] Adjacent centerPos nextPos)
-getNextPos adj = direction→pos (rotate (direction adj)) _
-
 getInputPoints : Field → (pos : Pos) → Player → List ((∃[ chainPos ] Adjacent pos chainPos) × (∃[ capturedPos ] Adjacent pos capturedPos))
 getInputPoints fld pos player =
   let isDirectionPlayer : ((pos₁ : Pos) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)) → Bool
       isDirectionPlayer dir = Maybe.maybe′ (λ{(dirPos , _) → isPlayer fld dirPos player}) false $ dir pos
       list₁ = if not $ isDirectionPlayer w‵ then
-                if isDirectionPlayer sw‵ then List.fromMaybe (Maybe.zip (sw‵ pos) (w‵ pos))
-                else if isDirectionPlayer s‵ then List.fromMaybe (Maybe.zip (s‵ pos) (w‵ pos))
+                if isDirectionPlayer nw‵ then List.fromMaybe (Maybe.zip (nw‵ pos) (w‵ pos))
+                else if isDirectionPlayer n‵ then List.fromMaybe (Maybe.zip (n‵ pos) (w‵ pos))
                 else []
               else
                 []
-      list₂ = if not $ isDirectionPlayer n‵ then
-                if isDirectionPlayer nw‵ then List.fromMaybe (Maybe.zip (nw‵ pos) (n‵ pos)) ++ list₁
-                else if isDirectionPlayer w‵ then List.fromMaybe (Maybe.zip (w‵ pos) (n‵ pos)) ++ list₁
+      list₂ = if not $ isDirectionPlayer s‵ then
+                if isDirectionPlayer sw‵ then List.fromMaybe (Maybe.zip (sw‵ pos) (s‵ pos)) ++ list₁
+                else if isDirectionPlayer w‵ then List.fromMaybe (Maybe.zip (w‵ pos) (s‵ pos)) ++ list₁
                 else list₁
               else
                 list₁
       list₃ = if not $ isDirectionPlayer e‵ then
-                if isDirectionPlayer ne‵ then List.fromMaybe (Maybe.zip (ne‵ pos) (e‵ pos)) ++ list₂
-                else if isDirectionPlayer n‵ then List.fromMaybe (Maybe.zip (n‵ pos) (e‵ pos)) ++ list₂
+                if isDirectionPlayer se‵ then List.fromMaybe (Maybe.zip (se‵ pos) (e‵ pos)) ++ list₂
+                else if isDirectionPlayer s‵ then List.fromMaybe (Maybe.zip (s‵ pos) (e‵ pos)) ++ list₂
                 else list₂
               else
                 list₂
-      list₄ = if not $ isDirectionPlayer s‵ then
-                if isDirectionPlayer se‵ then List.fromMaybe (Maybe.zip (se‵ pos) (s‵ pos)) ++ list₃
-                else if isDirectionPlayer e‵ then List.fromMaybe (Maybe.zip (e‵ pos) (s‵ pos)) ++ list₃
+      list₄ = if not $ isDirectionPlayer n‵ then
+                if isDirectionPlayer ne‵ then List.fromMaybe (Maybe.zip (ne‵ pos) (n‵ pos)) ++ list₃
+                else if isDirectionPlayer e‵ then List.fromMaybe (Maybe.zip (e‵ pos) (n‵ pos)) ++ list₃
                 else list₃
               else
                 list₃
@@ -190,7 +184,7 @@ flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (
 
 {-# TERMINATING #-}
 buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-buildChain fld startPos nextPos adj player = if ⌊ 0ℤ ℤ.<? square (List⁺.toList (proj₁ chain₂)) ⌋ then just chain₂ else nothing
+buildChain fld startPos nextPos adj player = if ⌊ square (List⁺.toList (proj₁ chain₂)) ℤ.<? 0ℤ ⌋ then just chain₂ else nothing
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?

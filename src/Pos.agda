@@ -70,7 +70,7 @@ Adjacent↖ pos₁ pos₂ = Adjacent↘ pos₂ pos₁
 Adjacent↙ : Pos width height → Pos width height → Set
 Adjacent↙ pos₁ pos₂ = Adjacent↗ pos₂ pos₁
 
--- x does right, y goes down
+-- x goes right, y goes down
 data Adjacent : Pos width height → Pos width height → Set where
   adj→ : Adjacent {suc (suc width)} {suc height} (0F , 0F) (1F , 0F)
   adj↓ : Adjacent {suc width} {suc (suc height)} (0F , 0F) (0F , 1F)
