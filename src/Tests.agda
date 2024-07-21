@@ -46,8 +46,151 @@ constructField image with List.filter (λ s → ¬? (s String.≟ "")) $ String.
                           }) (just emptyField) moves
   in Maybe.map (λ fld → record { fld = fld }) fld
 
-simpleSurround = GenField.fld $ Maybe.from-just $ constructField "
+simpleSurroundImage = constructField "
 .a.
 cBa
 .a.
+"
+
+surroundEmptyTerritoryImage = constructField "
+.a.
+a.a
+.a.
+"
+
+movePriorityImage = constructField "
+.aB.
+aCaB
+.aB.
+"
+
+movePriorityBigImage = constructField "
+.B..
+BaB.
+aCaB
+.aB.
+"
+
+onionSurroundingsImage = constructField "
+...c...
+..cBc..
+.cBaBc.
+..cBc..
+...c...
+"
+
+deepOnionSurroundingsImage = constructField "
+...D...
+..DcD..
+.DcBcD.
+DcBaBcD
+.DcBcD.
+..DcD..
+...D...
+"
+
+applyControlSurroundingInSameTurnImage = constructField "
+.a.
+aBa
+.a.
+"
+
+doubleSurroundImage = constructField "
+.a.a.
+aAbAa
+.a.a.
+"
+
+doubleSurroundWithEmptyPartImage = constructField "
+.b.b..
+b.zAb.
+.b.b..
+"
+
+shouldNotLeaveEmptyInsideImage = constructField "
+.aaaa..
+a....a.
+a.b...a
+.z.bC.a
+a.b...a
+a....a.
+.aaaa..
+"
+
+surroundInOppositeTurnImage = constructField "
+.a.
+aBa
+.a.
+"
+
+partlySurroundInOppositeTurnImage = constructField "
+.a..
+aBa.
+.a.a
+..a.
+"
+
+holeInsideSurroundingImage = constructField "
+....c....
+...c.c...
+..c...c..
+.c..a..c.
+c..a.a..c
+.c..a..c.
+..c...c..
+...cBc...
+....d....
+"
+
+holeInsideSurroundingAfterOppositeTurnSurroundingImage = constructField "
+....b....
+...b.b...
+..b...b..
+.b..a..b.
+b..a.a..b
+.b..a..b.
+..b...b..
+...bCb...
+....b....
+"
+
+surroundingDoesNotExpandImage = constructField "
+....a....
+...a.a...
+..a.a.a..
+.a.a.a.a.
+a.a.aBa.a
+.a.a.a.a.
+..a.a.a..
+...a.a...
+....a....
+"
+
+twoSurroundingsWithCommonBorderImage = constructField "
+.a..
+aAa.
+.bAa
+..a.
+"
+
+twoSurroundingsWithCommonDotImage = constructField "
+.a.a.
+aBcBa
+.a.a.
+"
+
+threeSurroundingsWithCommonBordersImage = constructField "
+..a..
+.aAa.
+..bAa
+.aAa.
+..a..
+"
+
+twoSurroundingsWithCommonDotOneBorderlineEmptyPlaceImage = constructField "
+..a..
+.aBa.
+..c.a
+.aBa.
+..a..
 "

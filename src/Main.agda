@@ -2,8 +2,9 @@
 
 module Main where
 
-open import Data.Bool using (Bool; if_then_else_; not; _∧_)
+open import Data.Bool using (Bool; false; if_then_else_; not; _∧_)
 open import Data.Fin.Patterns
+open import Data.Maybe as Maybe
 open import Data.Nat as ℕ
 open import Data.Product using (_,_)
 open import Data.String as String
@@ -22,12 +23,41 @@ test name cond = do
   putStr ": "
   putStrLn (if cond then "passed" else "failed")
 
-simpleSurroundTest : IO {0ℓ} ⊤
-simpleSurroundTest = test "simple surround" $
-  ⌊ Field.scoreRed simpleSurround ℕ.≟ 1 ⌋ ∧
-  ⌊ Field.scoreBlack simpleSurround ℕ.≟ 0 ⌋ ∧
-  isPuttingAllowed simpleSurround (0F , 0F) ∧
-  not (isPuttingAllowed simpleSurround (1F , 1F))
+simpleSurround : IO {0ℓ} ⊤
+simpleSurround = test "simple surround" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 1 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false simpleSurroundImage
+
+surroundEmptyTerritory : IO {0ℓ} ⊤
+surroundEmptyTerritory = test "surround empty territory" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 0 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 0 ⌋
+  ) false surroundEmptyTerritoryImage
+
+movePriority : IO {0ℓ} ⊤
+movePriority = test "move priority" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 0 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 1 ⌋
+  ) false movePriorityImage
+
+movePriorityBig : IO {0ℓ} ⊤
+movePriorityBig = test "move priority, big" $ Maybe.maybe′ (λ genField →
+  let fld = GenField.fld genField
+  in
+    ⌊ Field.scoreRed (GenField.fld genField) ℕ.≟ 0 ⌋ ∧
+    ⌊ Field.scoreBlack (GenField.fld genField) ℕ.≟ 2 ⌋
+  ) false movePriorityBigImage
 
 main : Main
-main = run do simpleSurroundTest
+main = run do
+  simpleSurround
+  surroundEmptyTerritory
+  movePriority
+  movePriorityBig

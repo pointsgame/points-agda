@@ -2,11 +2,15 @@ module TypelevelTests where
 
 open import Data.Bool using (true; false)
 open import Data.Fin.Patterns
+open import Data.Maybe as Maybe
 open import Data.Product using (_,_)
+open import Function using (_$_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import Field
 open import Tests
+
+simpleSurround = GenField.fld $ Maybe.from-just simpleSurroundImage
 
 _ : Field.scoreRed simpleSurround ≡ 1
 _ = refl
