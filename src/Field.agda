@@ -122,7 +122,7 @@ wave startPos f = wave' S.empty (S.singleton startPos)
                                                            ∷ e‵ pos
                                                            ∷ []
         nextFront : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
-        nextFront passed front = (S.fromList $ List.boolFilter f $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
+        nextFront passed front = (S.fromList $ List.filter ((Bool._≟ true) ∘ f) $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
         wave' : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         wave' passed front = if List.null (S.toList front)
                              then passed
@@ -252,7 +252,7 @@ getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChai
         getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
                                  else let inputPoints = getInputPoints fld pos player
                                           chains = List.mapMaybe (λ{((chainPos , adj) , _) -> buildChain fld pos chainPos adj player}) inputPoints
-                                          result = List.head $ List.boolFilter (posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
+                                          result = List.head $ List.filter ((Bool._≟ true) ∘ posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
                                       in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁))
 
 capture : Player → Point → Point
@@ -277,12 +277,12 @@ putPoint pos player fld _ =
       captures = List.mapMaybe (λ{((chainPos , chainAdj) , (capturedPos , _)) →
         Maybe.map (λ chain →
           (chain , (S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ chain))) (buildChain fld pos chainPos chainAdj player)}) inputPoints
-      capturedCount = List.length ∘ List.boolFilter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer)
-      freedCount = List.length ∘ List.boolFilter (λ pos‵ → isCapturedPoint fld pos‵ player)
-      (emptyCaptures , realCaptures) = List.boolPartition (λ{(_ , captured) → ⌊ capturedCount captured ℕ.≟ 0 ⌋}) captures
+      capturedCount = List.length ∘ List.filter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer Bool.≟ true)
+      freedCount = List.length ∘ List.filter (λ pos‵ → isCapturedPoint fld pos‵ player Bool.≟ true)
+      (emptyCaptures , realCaptures) = List.partition (λ{(_ , captured) → capturedCount captured ℕ.≟ 0}) captures
       capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
       freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
-      newEmptyBase = S.fromList $ List.boolFilter (λ pos‵ → ⌊ Field.points fld pos‵ ≟ₚₜ EmptyPoint ⌋) $ List.concatMap proj₂ emptyCaptures
+      newEmptyBase = S.fromList $ List.filter (λ pos‵ → Field.points fld pos‵ ≟ₚₜ EmptyPoint) $ List.concatMap proj₂ emptyCaptures
       realCaptured = List.concatMap proj₂ realCaptures
       newScoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
       newScoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack fld ℕ.+ capturedTotal else Field.scoreBlack fld ℕ.∸ freedTotal

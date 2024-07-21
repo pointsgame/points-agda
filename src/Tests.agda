@@ -11,7 +11,7 @@ open import Data.String as String using (String)
 open import Function using (_$_; _∘_; case_of_)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Relation.Nullary using (_because_; ofʸ)
-open import Relation.Nullary.Decidable using (⌊_⌋)
+open import Relation.Nullary.Decidable using (¬?)
 
 open import Player
 open import Field
@@ -31,14 +31,14 @@ sort : ∀ {width height} → List (Char × Fin width × Fin height) → List (C
 sort = List.foldl insert []
 
 constructField : String → Maybe GenField
-constructField image with List.boolFilter (λ s → not ⌊ s String.≟ "" ⌋) $ String.wordsBy (Char._≟ '\n') image
+constructField image with List.filter (λ s → ¬? (s String.≟ "")) $ String.wordsBy (Char._≟ '\n') image
 ... | [] = nothing
 ... | lines @ (h ∷ _) =
   let width = String.length h
       height = List.length lines
       moves = List.map (λ{(c , pos) → (if Char.isLower c then Red else Black) , pos}) $
               sort $
-              List.boolFilter (λ{(c , _) → not ⌊ Char.toLower c Char.≟ Char.toUpper c ⌋}) $
+              List.filter (λ{(c , _) → ¬? (Char.toLower c Char.≟ Char.toUpper c)}) $
               List.concatMap (λ{(line , y) → List.map (λ{(c , x) → c , x , y}) $
                                              List.zip (String.toList line) $
                                              List.allFin width}) $
