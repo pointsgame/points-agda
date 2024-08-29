@@ -161,12 +161,12 @@ getInputPoints fld pos player =
 square : List Pos → ℤ
 square [] = 0ℤ
 square (pos ∷ tail) = square‵ $ pos ∷ tail
-  where fiberBundle : Pos → Pos → ℤ
-        fiberBundle (x₁ , y₁) (x₂ , y₂) = + toℕ x₁ * + toℕ y₂ - + toℕ y₁ * + toℕ x₂
+  where skewProduct : Pos → Pos → ℤ
+        skewProduct (x₁ , y₁) (x₂ , y₂) = + toℕ x₁ * + toℕ y₂ - + toℕ y₁ * + toℕ x₂
         square‵ : List Pos → ℤ
         square‵ [] = 0ℤ
-        square‵ (pos₁ ∷ []) = fiberBundle pos₁ pos
-        square‵ (pos₁ ∷ pos₂ ∷ tail) = fiberBundle pos₁ pos₂ + square‵ (pos₂ ∷ tail)
+        square‵ (pos₁ ∷ []) = skewProduct pos₁ pos
+        square‵ (pos₁ ∷ pos₂ ∷ tail) = skewProduct pos₁ pos₂ + square‵ (pos₂ ∷ tail)
 
 -- Removes intersections from a chain.
 flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
