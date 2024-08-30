@@ -118,7 +118,7 @@ emptyField = record { scoreRed = 0
 wave : Pos → (Pos → Bool) → ⟨Set⟩ₚₒₛ
 wave startPos f = wave' S.empty (S.singleton startPos)
   where _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
-        _\\ₛ_ set₁ set₂ = List.foldl (Function.flip S.delete) set₁ (S.toList set₂)
+        _\\ₛ_ set₁ set₂ = List.foldr S.delete set₁ (S.toList set₂)
         neighborhood : Pos → List Pos
         neighborhood pos = List.mapMaybe (Maybe.map proj₁) $ n‵ pos
                                                            ∷ s‵ pos
