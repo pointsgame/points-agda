@@ -308,24 +308,24 @@ putPoint pos player fld _ =
                               points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ BasePoint enemyPlayer false) points₁ enemyEmptyBase
                           in points₂
                }
-     else (if ⌊ point‵ ≟ₚₜ EmptyBasePoint player ⌋
-           then record
-                { Field fld
-                ; moves = newMoves
-                ; lastSurroundChains = []
-                ; points = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                }
-           else record
-                { scoreRed = newScoreRed
-                ; scoreBlack = newScoreBlack
-                ; moves = newMoves
-                ; lastSurroundChains = List.map proj₁ realCaptures
-                ; lastSurroundPlayer = player
-                ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                               points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyBasePoint player) points₁ newEmptyBase
-                               points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
-                           in points₃
-                })
+     else if ⌊ point‵ ≟ₚₜ EmptyBasePoint player ⌋
+     then record
+          { Field fld
+          ; moves = newMoves
+          ; lastSurroundChains = []
+          ; points = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
+          }
+     else record
+          { scoreRed = newScoreRed
+          ; scoreBlack = newScoreBlack
+          ; moves = newMoves
+          ; lastSurroundChains = List.map proj₁ realCaptures
+          ; lastSurroundPlayer = player
+          ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
+                         points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyBasePoint player) points₁ newEmptyBase
+                         points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
+                     in points₃
+          }
 
 lastPlayer : Field → Maybe Player
 lastPlayer fld = Maybe.map proj₂ $ List.head $ Field.moves fld
