@@ -5,9 +5,9 @@ module Pos where
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using (Fin; suc; inject₁; _<_; _≟_)
 open import Data.Fin.Patterns
-open import Data.Fin.Properties using (<-strictTotalOrder)
+open import Data.Fin.Properties using (<-strictTotalOrder; *↔×)
 open import Data.Maybe as Maybe using (Maybe; nothing; just; _>>=_)
-open import Data.Nat using (ℕ; suc)
+open import Data.Nat using (ℕ; suc; _*_)
 open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
 open import Data.Product.Properties using (≡-dec)
 open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
@@ -23,6 +23,9 @@ private
 
 Pos : ℕ → ℕ → Set
 Pos width height = Fin width × Fin height
+
+toFin : Pos width height → Fin (width * height)
+toFin = Function.Inverse.from *↔×
 
 _≟ₚₒₛ_ : (pos₁ pos₂ : Pos width height) → Dec (pos₁ ≡ pos₂)
 _≟ₚₒₛ_ {width} {height} = ≡-dec (_≟_ {width}) (_≟_ {height})
