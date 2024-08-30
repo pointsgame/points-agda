@@ -7,7 +7,7 @@ open import Data.Bool.Properties using (T?)
 open import Data.Fin as Fin using (Fin)
 open import Data.Fin.Properties using (*↔×)
 open import Data.List as List using ()
-open import Data.Maybe as Maybe using (nothing; just)
+open import Data.Maybe as Maybe using (Maybe; nothing; just)
 open import Data.Nat as ℕ using (ℕ; _*_; _+_)
 open import Data.Nat.PseudoRandom.LCG using (step; glibc)
 open import Data.Product using (_×_; _,_)
@@ -94,11 +94,31 @@ result-rawMonoid = record
   ; ε = record { red = 0; black = 0 }
   }
 
-open import Data.Nat.Show using (show)
-open import Data.String using (_++_)
-open import IO as IO using (IO; Main; run; pure; putStrLn)
+open import Data.List using (List)
+open import Data.Nat.Show using (show; readMaybe)
+open import Data.String using (String; _++_)
+open import IO as IO using (IO; Main; run; pure; putStrLn; _>>=_)
+open import Agda.Builtin.IO as Prim
+open import System.Exit using (exitFailure)
+
+postulate
+  getArgs : Prim.IO $ List String
+
+{-# FOREIGN GHC import qualified Data.Text as Text #-}
+{-# FOREIGN GHC import qualified System.Environment as Environment #-}
+{-# COMPILE GHC getArgs = fmap (map Text.pack) Environment.getArgs #-}
+
+record Args : Set where
+  field
+    seed : ℕ
+
+parseArgs : List String → Maybe Args
+parseArgs (seed List.∷ _) = Maybe.map (λ seed → record { seed = seed }) $ readMaybe 10 seed
+parseArgs _ = nothing
 
 main : Main
 main = run do
-  let result = Vec.foldl₁ (RawMonoid._∙_ result-rawMonoid) $ Vec.map gameResult $ games 7 100 10 10
+  args ← IO.lift getArgs
+  args ← Maybe.maybe′ IO.pure (putStrLn "Usage: Bench {seed}" IO.>> exitFailure) $ parseArgs args
+  let result = Vec.foldl₁ (RawMonoid._∙_ result-rawMonoid) $ Vec.map gameResult $ games (Args.seed args) 100 10 10
   putStrLn $ (show $ Result.red result) ++ "|" ++ (show $ Result.black result)
