@@ -6,12 +6,16 @@ open import Data.Bool using (true; false)
 open import Data.Bool.Properties using (T?)
 open import Data.Fin as Fin using (Fin)
 open import Data.Fin.Properties using (*↔×)
-open import Data.List as List using ()
+open import Data.List as List using (List)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
+open import Data.Maybe.Effectful as MaybeEff using ()
 open import Data.Nat as ℕ using (ℕ; _*_; _+_)
+open import Data.Nat.Show using (show; readMaybe)
 open import Data.Nat.PseudoRandom.LCG using (step; glibc)
 open import Data.Product using (_×_; _,_)
+open import Data.String using (String; _++_)
 open import Data.Vec as Vec using (Vec; _∷_; [])
+open import Effect.Monad
 open import Function using (_$_; case_of_)
 open import Relation.Nullary using (_because_; ofʸ)
 
@@ -32,7 +36,6 @@ allMoves {width} {height} = Vec.map (Function.Inverse.to *↔×) $ Vec.allFin (w
 
 module RandomState (step : ℕ → ℕ) where
   open import Effect.Monad.State
-  open import Effect.Monad
   open RawMonadState (monadState {_} {ℕ})
   open RawMonad (monad {_} {ℕ})
 
@@ -94,9 +97,21 @@ result-rawMonoid = record
   ; ε = record { red = 0; black = 0 }
   }
 
-open import Data.List using (List)
-open import Data.Nat.Show using (show; readMaybe)
-open import Data.String using (String; _++_)
+record Args : Set where
+  field
+    width height gamesNumber seed : ℕ
+
+parseArgs : List String → Maybe Args
+parseArgs (width List.∷ height List.∷ gamesNumber List.∷ seed List.∷ _) =
+  let open RawMonad MaybeEff.monad
+  in do
+    width ← readMaybe 10 width
+    height ← readMaybe 10 height
+    gamesNumber ← readMaybe 10 gamesNumber
+    seed ← readMaybe 10 seed
+    pure record { width = width; height = height; gamesNumber = gamesNumber; seed = seed }
+parseArgs _ = nothing
+
 open import IO as IO using (IO; Main; run; pure; putStrLn; _>>=_)
 open import Agda.Builtin.IO as Prim
 open import System.Exit using (exitFailure)
@@ -108,17 +123,9 @@ postulate
 {-# FOREIGN GHC import qualified System.Environment as Environment #-}
 {-# COMPILE GHC getArgs = fmap (map Text.pack) Environment.getArgs #-}
 
-record Args : Set where
-  field
-    seed : ℕ
-
-parseArgs : List String → Maybe Args
-parseArgs (seed List.∷ _) = Maybe.map (λ seed → record { seed = seed }) $ readMaybe 10 seed
-parseArgs _ = nothing
-
 main : Main
 main = run do
   args ← IO.lift getArgs
-  args ← Maybe.maybe′ IO.pure (putStrLn "Usage: Bench {seed}" IO.>> exitFailure) $ parseArgs args
-  let result = Vec.foldl₁ (RawMonoid._∙_ result-rawMonoid) $ Vec.map gameResult $ games (Args.seed args) 100 10 10
+  args ← Maybe.maybe′ IO.pure (putStrLn "Usage: Bench {width} {height} {games} {seed}" IO.>> exitFailure) $ parseArgs args
+  let result = Vec.foldl₁ (RawMonoid._∙_ result-rawMonoid) $ Vec.map gameResult $ games (Args.seed args) (ℕ.suc $ Args.gamesNumber args) (Args.width args) (Args.height args)
   putStrLn $ (show $ Result.red result) ++ "|" ++ (show $ Result.black result)
