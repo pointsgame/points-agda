@@ -332,3 +332,20 @@ putPoint pos player fld _ =
                                                 then capture player $ Field.points fld pos‵
                                                 else Field.points fld pos‵))
                 })
+
+lastPlayer : Field → Maybe Player
+lastPlayer fld = Maybe.map proj₂ $ List.head $ Field.moves fld
+
+nextPlayer : Field → Player
+nextPlayer = Maybe.fromMaybe Player.Red ∘ Maybe.map Player.next ∘ lastPlayer
+
+putNextPoint : (pos : Pos) → (fld : Field) → Bool.T (isPuttingAllowed fld pos) → Field
+putNextPoint pos fld = putPoint pos (nextPlayer fld) fld
+
+winner : Field → Maybe Player
+winner fld =
+  if ⌊ Field.scoreBlack fld ℕ.<? Field.scoreRed fld ⌋
+  then just Player.Red
+  else if ⌊ Field.scoreRed fld ℕ.<? Field.scoreBlack fld ⌋
+  then just Player.Black
+  else nothing

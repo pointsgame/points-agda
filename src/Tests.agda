@@ -39,9 +39,9 @@ constructField image with List.filter (λ s → ¬? (s String.≟ "")) $ String.
               List.zip lines $
               List.allFin height
       fld = List.foldl (λ { (just fld) (player , pos) → case T? (isPuttingAllowed fld pos) of
-                                                        λ { (false because _) → nothing
-                                                          ; (true because ofʸ proof) → just (putPoint pos player fld proof)
-                                                          }
+                                                           λ { (false because _) → nothing
+                                                             ; (true because ofʸ proof) → just (putPoint pos player fld proof)
+                                                             }
                           ; nothing _ → nothing
                           }) (just emptyField) moves
   in Maybe.map (λ fld → record { fld = fld }) fld
