@@ -328,7 +328,7 @@ putPoint pos player fld _ =
           }
 
 lastPlayer : Field → Maybe Player
-lastPlayer fld = Maybe.map proj₂ $ List.head $ Field.moves fld
+lastPlayer = Maybe.map proj₂ ∘ List.head ∘ Field.moves
 
 nextPlayer : Field → Player
 nextPlayer = Maybe.fromMaybe Player.Red ∘ Maybe.map Player.next ∘ lastPlayer
