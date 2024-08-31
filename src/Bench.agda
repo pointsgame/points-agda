@@ -128,4 +128,4 @@ main = run do
   args ← IO.lift getArgs
   args ← Maybe.maybe′ IO.pure (putStrLn "Usage: Bench {width} {height} {games} {seed}" IO.>> exitFailure) $ parseArgs args
   let result = Vec.foldr₁ (RawMonoid._∙_ result-rawMonoid) $ Vec.map gameResult $ games (Args.seed args) (ℕ.suc $ Args.gamesNumber args) (Args.width args) (Args.height args)
-  putStrLn $ (show $ Result.red result) ++ "|" ++ (show $ Result.black result)
+  putStrLn $ (show $ Result.red result) ++ ":" ++ (show $ Result.black result)
