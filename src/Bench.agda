@@ -81,7 +81,7 @@ record Result : Set where
   field
     red black : ℕ
 
-gameResult : {width height : ℕ} -> Field {width} {height} → Result
+gameResult : {width height : ℕ} → Field {width} {height} → Result
 gameResult fld with winner fld
 ... | just Player.Red = record { red = 1; black = 0 }
 ... | just Player.Black = record { red = 0; black = 1 }
