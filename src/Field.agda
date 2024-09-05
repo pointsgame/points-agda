@@ -105,6 +105,9 @@ isPlayersPoint fld pos player = ⌊ point fld pos ≟ₚₜ PlayerPoint player �
 isCapturedPoint : Field → Pos → Player → Bool
 isCapturedPoint fld pos player = ⌊ point fld pos ≟ₚₜ BasePoint (next player) true ⌋
 
+isEmptyBase : Field → Pos → Player → Bool
+isEmptyBase fld pos player = ⌊ point fld pos ≟ₚₜ EmptyBasePoint player ⌋
+
 emptyField : Field
 emptyField = record { scoreRed = 0
                     ; scoreBlack = 0
@@ -269,7 +272,9 @@ putPoint : (pos : Pos) → Player → (fld : Field) → Bool.T (isPuttingAllowed
 putPoint pos player fld _ =
   let enemyPlayer = next player
       enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
-      enemyEmptyBase = Maybe.maybe′ (λ{(chain , _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
+      enemyEmptyBase = List.filter (λ pos‵ → isEmptyBase fld pos‵ enemyPlayer Bool.≟ true) $
+                       S.toList $
+                       Maybe.maybe′ (λ{(chain , _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
       inputPoints = getInputPoints fld pos player
       captures = List.mapMaybe (λ{((chainPos , chainAdj) , (capturedPos , _)) →
         Maybe.map (λ chain →
@@ -294,7 +299,7 @@ putPoint pos player fld _ =
                ; lastSurroundChains = List.map proj₁ realCaptures
                ; lastSurroundPlayer = player
                ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                              points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyPoint) points₁ enemyEmptyBase
+                              points₂ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyPoint) points₁ enemyEmptyBase
                               points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
                           in points₃
                }
@@ -304,8 +309,8 @@ putPoint pos player fld _ =
                ; moves = newMoves
                ; lastSurroundChains = List.fromMaybe enemyEmptyBaseChain
                ; lastSurroundPlayer = enemyPlayer
-               ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ BasePoint enemyPlayer true
-                              points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ BasePoint enemyPlayer false) points₁ enemyEmptyBase
+               ; points = let points₁ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ BasePoint enemyPlayer false) (Field.points fld) enemyEmptyBase
+                              points₂ = points₁ [ Pos.toFin pos ]≔ BasePoint enemyPlayer true
                           in points₂
                }
      else if ⌊ point‵ ≟ₚₜ EmptyBasePoint player ⌋
