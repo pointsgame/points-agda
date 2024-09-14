@@ -201,7 +201,7 @@ buildChain fld startPos nextPos adj player = if ⌊ square (List⁺.toList (proj
         getChain _ nextPos adj = let (nextPos‵ , nextAdj) = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
                                      (nextChain , (nextChainAdj , nextRing)) = getChain nextPos nextPos‵ nextAdj
                                  in case nextPos‵ ≟ₚₒₛ startPos of
-                                    λ { (true because ofʸ proof) → (nextPos ⁺∷ [] , (adj ∷ₗ [-] , ring-init (adj↔ (subst (Adjacent nextPos) proof nextAdj))))
+                                    λ { (true because ofʸ proof) → (nextPos ⁺∷ [] , (adj ∷ₗ [-] , ring-init (adjacent-symm (subst (Adjacent nextPos) proof nextAdj))))
                                       ; (false because _) → (nextPos ∷⁺ nextChain , (adj ∷ₗ nextChainAdj , ring-extend nextRing))
                                       }
         chain₁ : ∃[ chain ] (IsChain⁺ (startPos ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
