@@ -318,6 +318,7 @@ putPoint pos player fld _ =
           { Field fld
           ; moves = newMoves
           ; lastSurroundChains = []
+          ; lastSurroundPlayer = player
           ; points = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
           }
      else record
