@@ -2,7 +2,7 @@ open import Data.Nat as ℕ using (ℕ)
 
 module Field {width height : ℕ} where
 
-open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_)
+open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_; _∧_)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; toℕ)
 open import Data.Integer as ℤ using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
@@ -191,7 +191,7 @@ flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (
 
 {-# TERMINATING #-}
 buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-buildChain fld startPos nextPos adj player = if ⌊ square (List⁺.toList (proj₁ chain₂)) ℤ.<? 0ℤ ⌋ then just chain₂ else nothing
+buildChain fld startPos nextPos adj player = if ⌊ List⁺.length (proj₁ chain₂) ℕ.>? 2 ⌋ ∧ ⌊ square (List⁺.toList (proj₁ chain₂)) ℤ.<? 0ℤ ⌋ then just chain₂ else nothing
   where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
