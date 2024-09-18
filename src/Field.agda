@@ -241,18 +241,18 @@ posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List
         intersectionsCount (_ ∷ tail) is | is↔ = intersectionsCount tail is
         intersectionsCount (_ ∷ tail) _ | is = intersectionsCount tail is
 
-getInsideRing : Pos → List Pos -> ⟨Set⟩ₚₒₛ
+getInsideRing : Pos → List Pos → ⟨Set⟩ₚₒₛ
 getInsideRing startPos ring =
   let ringSet = S.fromList ring
   in wave startPos (not ∘ (S._∈? ringSet))
 
 {-# TERMINATING #-}
-getEmptyBaseChain : Field → Pos -> Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+getEmptyBaseChain : Field → Pos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
 getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
   where getEmptyBaseChain‵ : Pos → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
         getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
                                  else let inputPoints = getInputPoints fld pos player
-                                          chains = List.mapMaybe (λ{((chainPos , adj) , _) -> buildChain fld pos chainPos adj player}) inputPoints
+                                          chains = List.mapMaybe (λ{((chainPos , adj) , _) → buildChain fld pos chainPos adj player}) inputPoints
                                           result = List.head $ List.filter ((Bool._≟ true) ∘ posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
                                       in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁))
 
