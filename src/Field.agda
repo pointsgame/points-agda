@@ -284,7 +284,7 @@ putPoint pos player fld _ =
       (emptyCaptures , realCaptures) = List.partition (λ{(_ , captured) → capturedCount captured ℕ.≟ 0}) captures
       capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
       freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
-      newEmptyBase = S.fromList $ List.filter (λ pos‵ → point fld pos‵ ≟ₚₜ EmptyPoint) $ List.concatMap proj₂ emptyCaptures
+      newEmptyBase = List.filter (λ pos‵ → point fld pos‵ ≟ₚₜ EmptyPoint) $ List.concatMap proj₂ emptyCaptures
       realCaptured = List.concatMap proj₂ realCaptures
       newScoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
       newScoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack fld ℕ.+ capturedTotal else Field.scoreBlack fld ℕ.∸ freedTotal
@@ -328,7 +328,7 @@ putPoint pos player fld _ =
           ; lastSurroundChains = List.map proj₁ realCaptures
           ; lastSurroundPlayer = player
           ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                         points₂ = S.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyBasePoint player) points₁ newEmptyBase
+                         points₂ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyBasePoint player) points₁ newEmptyBase
                          points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
                      in points₃
           }
