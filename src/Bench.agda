@@ -24,12 +24,9 @@ open import Field
 
 swap : ∀ {A : Set} {n : ℕ} → Fin (ℕ.suc n) → Vec A (ℕ.suc n) → A × Vec A n
 swap Fin.zero (x₀ ∷ xs) = x₀ , xs
-swap {A = A} (Fin.suc i) (x₀ ∷ xs) = go i xs
-  where
-    go : ∀ {n} → Fin n → Vec A n → A × Vec A n
-    go Fin.zero (x ∷ xs) = x , x₀ ∷ xs
-    go (Fin.suc i) (x ∷ xs) with go i xs
-    ... | (x′ , xs′) = x′ , x ∷ xs′
+swap (Fin.suc Fin.zero) (x₀ ∷ x₁ ∷ xs) = x₁ , x₀ ∷ xs
+swap (Fin.suc (Fin.suc i)) (x₀ ∷ x₁ ∷ xs) with swap (Fin.suc i) (x₁ ∷ xs)
+... | (x′ , xs′) = x′ , x₀ ∷ xs′
 
 allMoves : {width height : ℕ} → Vec (Pos {width} {height}) (width * height)
 allMoves {width} {height} = Vec.map (Function.Inverse.to *↔×) $ Vec.allFin (width * height)
