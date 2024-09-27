@@ -11,7 +11,7 @@ open import Data.Nat using (ℕ; suc; _*_)
 open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
 open import Data.Product.Properties using (≡-dec)
 open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
-open import Function using (_$_; _∘_)
+open import Function using (_$_; _∘_; case_of_)
 open import Level using () renaming (zero to ℓ₀)
 open import Relation.Binary using (StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; _≢_; ≢-sym)
@@ -263,23 +263,32 @@ adjacentAbsurd (adj↗ adj) _ _ _ _ _ _ ¬adj _ = ¬adj adj
 adjacentAbsurd (adj↙ adj) _ _ _ _ _ _ _ ¬adj = ¬adj adj
 
 direction : ∀ {pos₁ pos₂ : Pos width height} → @0 Adjacent pos₁ pos₂ → Direction
-direction {pos₁ = pos₁} {pos₂ = pos₂} adj with decAdjacent→ pos₁ pos₂
-... | yes _ = dir→
-... | no p₁ with decAdjacent← pos₁ pos₂
-... | yes _ = dir←
-... | no p₂ with decAdjacent↓ pos₁ pos₂
-... | yes _ = dir↓
-... | no p₃ with decAdjacent↑ pos₁ pos₂
-... | yes _ = dir↑
-... | no p₄ with decAdjacent↘ pos₁ pos₂
-... | yes _ = dir↘
-... | no p₅ with decAdjacent↖ pos₁ pos₂
-... | yes _ = dir↖
-... | no p₆ with decAdjacent↗ pos₁ pos₂
-... | yes _ = dir↗
-... | no p₇ with decAdjacent↙ pos₁ pos₂
-... | yes _ = dir↙
-... | no p₈ = ⊥-elim′ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
+direction {pos₁ = pos₁} {pos₂ = pos₂} adj =
+  case decAdjacent→ pos₁ pos₂ of
+    λ { (yes _) → dir→
+      ; (no p₁) → case decAdjacent← pos₁ pos₂ of
+        λ { (yes _) → dir←
+          ; (no p₂) → case decAdjacent↓ pos₁ pos₂ of
+            λ { (yes _) → dir↓
+            ; (no p₃) → case decAdjacent↑ pos₁ pos₂ of
+              λ { (yes _) → dir↑
+              ; (no p₄) → case decAdjacent↘ pos₁ pos₂ of
+                λ { (yes _) → dir↘
+                ; (no p₅) → case decAdjacent↖ pos₁ pos₂ of
+                  λ { (yes _) → dir↖
+                  ; (no p₆) → case decAdjacent↗ pos₁ pos₂ of
+                    λ { (yes _) → dir↗
+                    ; (no p₇) → case decAdjacent↙ pos₁ pos₂ of
+                      λ { (yes _) → dir↙
+                      ; (no p₈) → ⊥-elim′ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+      }
 
 direction→pos : Direction → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 direction→pos dir→ = e‵
