@@ -1,3 +1,5 @@
+{-# OPTIONS --erasure #-}
+
 module Tests where
 
 open import Data.Bool using (not; true; false; if_then_else_)

@@ -1,8 +1,8 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --erasure #-}
 
 module Pos where
 
-open import Data.Empty using (⊥-elim)
+open import Data.Empty using (⊥)
 open import Data.Fin using (Fin; suc; inject₁; _<_; _≟_)
 open import Data.Fin.Patterns
 open import Data.Fin.Properties using (<-strictTotalOrder; *↔×)
@@ -16,10 +16,15 @@ open import Level using () renaming (zero to ℓ₀)
 open import Relation.Binary using (StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; _≢_; ≢-sym)
 open import Relation.Nullary using (¬_; Dec)
+open import Relation.Nullary.Decidable using (Dec; yes; no)
 
 private
   variable
     width height : ℕ
+
+-- Like ⊥-elim from Data.Empty but allows ⊥ to be erased
+⊥-elim′ : ∀ {w} {Whatever : Set w} → @0 ⊥ → Whatever
+⊥-elim′ ()
 
 -- x goes right, y goes down
 Pos : ℕ → ℕ → Set
@@ -69,6 +74,42 @@ data Adjacent (pos₁ pos₂ : Pos width height) : Set where
   adj↖ : Adjacent↖ pos₁ pos₂ → Adjacent pos₁ pos₂
   adj↗ : Adjacent↗ pos₁ pos₂ → Adjacent pos₁ pos₂
   adj↙ : Adjacent↙ pos₁ pos₂ → Adjacent pos₁ pos₂
+
+decAdjacent→ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent→ pos₁ pos₂
+decAdjacent→ (x₁ , y₁) (x₂ , y₂) with suc x₁ ≟ inject₁ x₂ | y₁ ≟ y₂
+... | yes p₁ | yes p₂ = yes (p₁ , p₂)
+... | no p₁ | _ = no λ (p₂ , _) → p₁ p₂
+... | _ | no p₁ = no λ (_ , p₂) → p₁ p₂
+
+decAdjacent↓ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↓ pos₁ pos₂
+decAdjacent↓ (x₁ , y₁) (x₂ , y₂) with x₁ ≟ x₂ | suc y₁ ≟ inject₁ y₂
+... | yes p₁ | yes p₂ = yes (p₁ , p₂)
+... | no p₁ | _ = no λ (p₂ , _) → p₁ p₂
+... | _ | no p₁ = no λ (_ , p₂) → p₁ p₂
+
+decAdjacent↘ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↘ pos₁ pos₂
+decAdjacent↘ (x₁ , y₁) (x₂ , y₂) with suc x₁ ≟ inject₁ x₂ | suc y₁ ≟ inject₁ y₂
+... | yes p₁ | yes p₂ = yes (p₁ , p₂)
+... | no p₁ | _ = no λ (p₂ , _) → p₁ p₂
+... | _ | no p₁ = no λ (_ , p₂) → p₁ p₂
+
+decAdjacent↗ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↗ pos₁ pos₂
+decAdjacent↗ (x₁ , y₁) (x₂ , y₂) with suc x₁ ≟ inject₁ x₂ | inject₁ y₁ ≟ suc y₂
+... | yes p₁ | yes p₂ = yes (p₁ , p₂)
+... | no p₁ | _ = no λ (p₂ , _) → p₁ p₂
+... | _ | no p₁ = no λ (_ , p₂) → p₁ p₂
+
+decAdjacent← : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent← pos₁ pos₂
+decAdjacent← pos₁ pos₂ = decAdjacent→ pos₂ pos₁
+
+decAdjacent↑ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↑ pos₁ pos₂
+decAdjacent↑ pos₁ pos₂ = decAdjacent↓ pos₂ pos₁
+
+decAdjacent↖ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↖ pos₁ pos₂
+decAdjacent↖ pos₁ pos₂ = decAdjacent↘ pos₂ pos₁
+
+decAdjacent↙ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↙ pos₁ pos₂
+decAdjacent↙ pos₁ pos₂ = decAdjacent↗ pos₂ pos₁
 
 adjacent-symm : ∀ {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Adjacent pos₂ pos₁
 adjacent-symm (adj→ adj) = adj← adj
@@ -201,15 +242,44 @@ rotate¬adjacent dir↖ = dir↗
 rotate¬adjacent dir↑ = dir↘
 rotate¬adjacent dir↗ = dir↘
 
-direction : ∀ {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Direction
-direction (adj→ _) = dir→
-direction (adj← _) = dir←
-direction (adj↓ _) = dir↓
-direction (adj↑ _) = dir↑
-direction (adj↘ _) = dir↘
-direction (adj↖ _) = dir↖
-direction (adj↗ _) = dir↗
-direction (adj↙ _) = dir↙
+@0 adjacentAbsurd : ∀ {pos₁ pos₂ : Pos width height}
+                → Adjacent pos₁ pos₂
+                → ¬ Adjacent→ pos₁ pos₂
+                → ¬ Adjacent← pos₁ pos₂
+                → ¬ Adjacent↓ pos₁ pos₂
+                → ¬ Adjacent↑ pos₁ pos₂
+                → ¬ Adjacent↘ pos₁ pos₂
+                → ¬ Adjacent↖ pos₁ pos₂
+                → ¬ Adjacent↗ pos₁ pos₂
+                → ¬ Adjacent↙ pos₁ pos₂
+                → ⊥
+adjacentAbsurd (adj→ adj) ¬adj _ _ _ _ _ _ _ = ¬adj adj
+adjacentAbsurd (adj← adj) _ ¬adj _ _ _ _ _ _ = ¬adj adj
+adjacentAbsurd (adj↓ adj) _ _ ¬adj _ _ _ _ _ = ¬adj adj
+adjacentAbsurd (adj↑ adj) _ _ _ ¬adj _ _ _ _ = ¬adj adj
+adjacentAbsurd (adj↘ adj) _ _ _ _ ¬adj _ _ _ = ¬adj adj
+adjacentAbsurd (adj↖ adj) _ _ _ _ _ ¬adj _ _ = ¬adj adj
+adjacentAbsurd (adj↗ adj) _ _ _ _ _ _ ¬adj _ = ¬adj adj
+adjacentAbsurd (adj↙ adj) _ _ _ _ _ _ _ ¬adj = ¬adj adj
+
+direction : ∀ {pos₁ pos₂ : Pos width height} → @0 Adjacent pos₁ pos₂ → Direction
+direction {pos₁ = pos₁} {pos₂ = pos₂} adj with decAdjacent→ pos₁ pos₂
+... | yes _ = dir→
+... | no p₁ with decAdjacent← pos₁ pos₂
+... | yes _ = dir←
+... | no p₂ with decAdjacent↓ pos₁ pos₂
+... | yes _ = dir↓
+... | no p₃ with decAdjacent↑ pos₁ pos₂
+... | yes _ = dir↑
+... | no p₄ with decAdjacent↘ pos₁ pos₂
+... | yes _ = dir↘
+... | no p₅ with decAdjacent↖ pos₁ pos₂
+... | yes _ = dir↖
+... | no p₆ with decAdjacent↗ pos₁ pos₂
+... | yes _ = dir↗
+... | no p₇ with decAdjacent↙ pos₁ pos₂
+... | yes _ = dir↙
+... | no p₈ = ⊥-elim′ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
 
 direction→pos : Direction → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
 direction→pos dir→ = e‵

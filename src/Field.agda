@@ -1,3 +1,5 @@
+{-# OPTIONS --erasure #-}
+
 open import Data.Nat as ℕ using (ℕ)
 
 module Field {width height : ℕ} where
