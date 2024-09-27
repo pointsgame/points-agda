@@ -8,7 +8,7 @@ open import Data.Fin.Patterns
 open import Data.Fin.Properties using (<-strictTotalOrder; *↔×)
 open import Data.Maybe as Maybe using (Maybe; nothing; just; _>>=_)
 open import Data.Nat using (ℕ; suc; _*_)
-open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Product.Properties using (≡-dec)
 open import Data.Product.Relation.Binary.Lex.Strict using (×-strictTotalOrder)
 open import Function using (_$_; _∘_; case_of_)
@@ -17,14 +17,11 @@ open import Relation.Binary using (StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; _≢_; ≢-sym)
 open import Relation.Nullary using (¬_; Dec)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
+open import Erased
 
 private
   variable
     width height : ℕ
-
--- Like ⊥-elim from Data.Empty but allows ⊥ to be erased
-⊥-elim′ : ∀ {w} {Whatever : Set w} → @0 ⊥ → Whatever
-⊥-elim′ ()
 
 -- x goes right, y goes down
 Pos : ℕ → ℕ → Set
@@ -111,7 +108,7 @@ decAdjacent↖ pos₁ pos₂ = decAdjacent↘ pos₂ pos₁
 decAdjacent↙ : (pos₁ pos₂ : Pos width height) → Dec $ Adjacent↙ pos₁ pos₂
 decAdjacent↙ pos₁ pos₂ = decAdjacent↗ pos₂ pos₁
 
-adjacent-symm : ∀ {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Adjacent pos₂ pos₁
+@0 adjacent-symm : ∀ {pos₁ pos₂ : Pos width height} → Adjacent pos₁ pos₂ → Adjacent pos₂ pos₁
 adjacent-symm (adj→ adj) = adj← adj
 adjacent-symm (adj← adj) = adj→ adj
 adjacent-symm (adj↓ adj) = adj↑ adj
@@ -121,16 +118,16 @@ adjacent-symm (adj↖ adj) = adj↘ adj
 adjacent-symm (adj↗ adj) = adj↙ adj
 adjacent-symm (adj↙ adj) = adj↗ adj
 
-adjacent→↓↘ : ∀ {pos₁ pos₂ pos₃ : Pos width height} → Adjacent→ pos₁ pos₂ → Adjacent↓ pos₂ pos₃ → Adjacent↘ pos₁ pos₃
+@0 adjacent→↓↘ : ∀ {pos₁ pos₂ pos₃ : Pos width height} → Adjacent→ pos₁ pos₂ → Adjacent↓ pos₂ pos₃ → Adjacent↘ pos₁ pos₃
 adjacent→↓↘ adj₁ adj₂ rewrite sym $ proj₁ adj₂ | proj₂ adj₁ = (proj₁ adj₁ , proj₂ adj₂)
 
-adjacent→↑↗ : ∀ {pos₁ pos₂ pos₃ : Pos width height} → Adjacent→ pos₁ pos₂ → Adjacent↓ pos₃ pos₂ → Adjacent↗ pos₁ pos₃
+@0 adjacent→↑↗ : ∀ {pos₁ pos₂ pos₃ : Pos width height} → Adjacent→ pos₁ pos₂ → Adjacent↓ pos₃ pos₂ → Adjacent↗ pos₁ pos₃
 adjacent→↑↗ adj₁ adj₂ rewrite proj₁ adj₂ | proj₂ adj₁ = (proj₁ adj₁ , sym (proj₂ adj₂))
 
-suc≢inject₁ : ∀ {n : ℕ} {x : Fin n} → suc x ≢ inject₁ x
+@0 suc≢inject₁ : ∀ {n : ℕ} {x : Fin n} → suc x ≢ inject₁ x
 suc≢inject₁ = ≢-sym $ <⇒≢ $ ≤̄⇒inject₁< ≤-refl where open Data.Fin.Properties
 
-adjacent-⊥ : ∀ {pos : Pos width height} → ¬ Adjacent pos pos
+@0 adjacent-⊥ : ∀ {pos : Pos width height} → ¬ Adjacent pos pos
 adjacent-⊥ (adj→ (p , _)) = suc≢inject₁ p
 adjacent-⊥ (adj← (p , _)) = suc≢inject₁ p
 adjacent-⊥ (adj↓ (_ , p)) = suc≢inject₁ p
@@ -140,67 +137,67 @@ adjacent-⊥ (adj↖ (p , _)) = suc≢inject₁ p
 adjacent-⊥ (adj↗ (p , _)) = suc≢inject₁ p
 adjacent-⊥ (adj↙ (p , _)) = suc≢inject₁ p
 
-n : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↑ pos₁ pos₂)
+n : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↑ pos₁ pos₂)
 n (_ , 0F) = nothing
-n (x , suc y) = just ((x , inject₁ y) , (refl , refl))
+n (x , suc y) = just ((x , inject₁ y) ,ₑ (refl , refl))
 
-s : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↓ pos₁ pos₂)
+s : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↓ pos₁ pos₂)
 s {_} {1} (_ , 0F) = nothing
-s {_} {suc (suc _)} (x , 0F) = just ((x , 1F) , (refl , refl))
-s (x , suc y) = Maybe.map (λ{((x₁ , y₁) , adj) → ((x₁ , suc y₁) , (proj₁ adj , cong suc (proj₂ adj)))}) $ s (x , y)
+s {_} {suc (suc _)} (x , 0F) = just ((x , 1F) ,ₑ (refl , refl))
+s (x , suc y) = Maybe.map (λ{((x₁ , y₁) ,ₑ adj) → ((x₁ , suc y₁) ,ₑ (proj₁ adj , cong suc (proj₂ adj)))}) $ s (x , y)
 
-w : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent← pos₁ pos₂)
+w : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent← pos₁ pos₂)
 w (0F , _) = nothing
-w (suc x , y) = just ((inject₁ x , y) , (refl , refl))
+w (suc x , y) = just ((inject₁ x , y) ,ₑ (refl , refl))
 
-e : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent→ pos₁ pos₂)
+e : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent→ pos₁ pos₂)
 e {1} {_} (0F , _) = nothing
-e {suc (suc _)} {_} (0F , y) = just ((1F , y) , (refl , refl))
-e (suc x , y) = Maybe.map (λ{((x₁ , y₁) , adj) → ((suc x₁ , y₁) , (cong suc (proj₁ adj) , proj₂ adj))}) $ e (x , y)
+e {suc (suc _)} {_} (0F , y) = just ((1F , y) ,ₑ (refl , refl))
+e (suc x , y) = Maybe.map (λ{((x₁ , y₁) ,ₑ adj) → ((suc x₁ , y₁) ,ₑ (cong suc (proj₁ adj) , proj₂ adj))}) $ e (x , y)
 
-nw : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↖ pos₁ pos₂)
-nw pos = do (npos , adj₁) ← n pos
-            (nwpos , adj₂) ← w npos
-            just (nwpos , adjacent→↓↘ adj₂ adj₁)
+nw : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↖ pos₁ pos₂)
+nw pos = do (npos ,ₑ adj₁) ← n pos
+            (nwpos ,ₑ adj₂) ← w npos
+            just (nwpos ,ₑ adjacent→↓↘ adj₂ adj₁)
 
-ne : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↗ pos₁ pos₂)
-ne pos = do (epos , adj₁) ← e pos
-            (nepos , adj₂) ← n epos
-            just (nepos , adjacent→↑↗ adj₁ adj₂)
+ne : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↗ pos₁ pos₂)
+ne pos = do (epos ,ₑ adj₁) ← e pos
+            (nepos ,ₑ adj₂) ← n epos
+            just (nepos ,ₑ adjacent→↑↗ adj₁ adj₂)
 
-sw : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↙ pos₁ pos₂)
-sw pos = do (spos , adj₁) ← s pos
-            (swpos , adj₂) ← w spos
-            just (swpos , adjacent→↑↗ adj₂ adj₁)
+sw : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↙ pos₁ pos₂)
+sw pos = do (spos ,ₑ adj₁) ← s pos
+            (swpos ,ₑ adj₂) ← w spos
+            just (swpos ,ₑ adjacent→↑↗ adj₂ adj₁)
 
-se : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent↘ pos₁ pos₂)
-se pos = do (epos , adj₁) ← e pos
-            (sepos , adj₂) ← s epos
-            just (sepos , adjacent→↓↘ adj₁ adj₂)
+se : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent↘ pos₁ pos₂)
+se pos = do (epos ,ₑ adj₁) ← e pos
+            (sepos ,ₑ adj₂) ← s epos
+            just (sepos ,ₑ adjacent→↓↘ adj₁ adj₂)
 
-n‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-n‵ = Maybe.map (Data.Product.map₂ adj↑) ∘ n
+n‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+n‵ = Maybe.map (map₂ₑ adj↑) ∘ n
 
-s‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-s‵ = Maybe.map (Data.Product.map₂ adj↓) ∘ s
+s‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+s‵ = Maybe.map (map₂ₑ adj↓) ∘ s
 
-w‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-w‵ = Maybe.map (Data.Product.map₂ adj←) ∘ w
+w‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+w‵ = Maybe.map (map₂ₑ adj←) ∘ w
 
-e‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-e‵ = Maybe.map (Data.Product.map₂ adj→) ∘ e
+e‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+e‵ = Maybe.map (map₂ₑ adj→) ∘ e
 
-nw‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-nw‵ = Maybe.map (Data.Product.map₂ adj↖) ∘ nw
+nw‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+nw‵ = Maybe.map (map₂ₑ adj↖) ∘ nw
 
-ne‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-ne‵ = Maybe.map (Data.Product.map₂ adj↗) ∘ ne
+ne‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+ne‵ = Maybe.map (map₂ₑ adj↗) ∘ ne
 
-sw‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-sw‵ = Maybe.map (Data.Product.map₂ adj↙) ∘ sw
+sw‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+sw‵ = Maybe.map (map₂ₑ adj↙) ∘ sw
 
-se‵ : (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
-se‵ = Maybe.map (Data.Product.map₂ adj↘) ∘ se
+se‵ : (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
+se‵ = Maybe.map (map₂ₑ adj↘) ∘ se
 
 data Direction : Set where
   dir→ : Direction
@@ -280,7 +277,7 @@ direction {pos₁ = pos₁} {pos₂ = pos₂} adj =
                     λ { (yes _) → dir↗
                     ; (no p₇) → case decAdjacent↙ pos₁ pos₂ of
                       λ { (yes _) → dir↙
-                      ; (no p₈) → ⊥-elim′ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
+                      ; (no p₈) → ⊥-elimₑ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
                       }
                     }
                   }
@@ -290,7 +287,7 @@ direction {pos₁ = pos₁} {pos₂ = pos₂} adj =
           }
       }
 
-direction→pos : Direction → (pos₁ : Pos width height) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)
+direction→pos : Direction → (pos₁ : Pos width height) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)
 direction→pos dir→ = e‵
 direction→pos dir↘ = se‵
 direction→pos dir↓ = s‵

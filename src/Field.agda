@@ -20,6 +20,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Relation.Nullary using (_because_; ofʸ)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
+open import Erased
 open import Player
 open import Point
 open import Pos renaming (Pos to FinPos)
@@ -51,27 +52,27 @@ data SameLast {A : Set} : List⁺ A → List⁺ A → Set where
   _∷ₛₗₗ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast (a ∷⁺ l₁) l₂
   _∷ₛₗᵣ_ : ∀ {l₁ l₂ : List⁺ A} (a : A) → SameLast l₁ l₂ → SameLast l₁ (a ∷⁺ l₂)
 
-same-last-lemm₁ : ∀ {A : Set} {l : List A} {a : A} → SameLast (a ⁺∷ l) (a ⁺∷ l)
+@0 same-last-lemm₁ : ∀ {A : Set} {l : List A} {a : A} → SameLast (a ⁺∷ l) (a ⁺∷ l)
 same-last-lemm₁ {l = []} = [-]ₛₗ
 same-last-lemm₁ {l = _ ∷ l} {a = a} = a ∷ₛₗₗ (a ∷ₛₗᵣ same-last-lemm₁)
 
-same-last-lemm₂ : ∀ {A : Set} {l₁ l₂ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₁
+@0 same-last-lemm₂ : ∀ {A : Set} {l₁ l₂ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₁
 same-last-lemm₂ [-]ₛₗ = [-]ₛₗ
 same-last-lemm₂ (a ∷ₛₗₗ sameLast) = a ∷ₛₗᵣ same-last-lemm₂ sameLast
 same-last-lemm₂ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗₗ same-last-lemm₂ sameLast
 
-same-last-lemm₃ : ∀ {A : Set} {a : A} {l₁ l₂ : List⁺ A} → SameLast (a ∷⁺ l₁) l₂ → SameLast l₁ l₂
+@0 same-last-lemm₃ : ∀ {A : Set} {a : A} {l₁ l₂ : List⁺ A} → SameLast (a ∷⁺ l₁) l₂ → SameLast l₁ l₂
 same-last-lemm₃ (_ ∷ₛₗₗ sameLast) = sameLast
 same-last-lemm₃ (a ∷ₛₗᵣ sameLast) = a ∷ₛₗᵣ same-last-lemm₃ sameLast
 
-same-last-lemm₄ : ∀ {A : Set} {l₁ l₂ l₃ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₃ → SameLast l₁ l₃
+@0 same-last-lemm₄ : ∀ {A : Set} {l₁ l₂ l₃ : List⁺ A} → SameLast l₁ l₂ → SameLast l₂ l₃ → SameLast l₁ l₃
 same-last-lemm₄ [-]ₛₗ b = b
 same-last-lemm₄ (x ∷ₛₗₗ a) b = x ∷ₛₗₗ same-last-lemm₄ a b
 same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
 same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
 
-is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
-is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elim (adjacent-⊥ adj)
+@0 is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
+is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elimₑ (adjacent-⊥ adj)
 is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ (.pos₁ ∷ₛₗᵣ [-]ₛₗ)) = ring-init adj
 is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗᵣ (.pos₁ ∷ₛₗₗ [-]ₛₗ)) = ring-init adj
 is-ring-lemm {.pos ⁺∷ _ ∷ []} {pos ⁺∷ _ ∷ _ ∷ tail} (ring-init adj) refl sameLast = ring-extend (is-ring-lemm (ring-init adj) refl $
@@ -82,7 +83,7 @@ record Field : Set where
   field
     scoreRed scoreBlack : ℕ
     moves : List (Pos × Player)
-    lastSurroundChains : List (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+    lastSurroundChains : List (∃ₑ[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
     lastSurroundPlayer : Player
     points : Vec Point (width ℕ.* height)
 
@@ -125,11 +126,11 @@ wave startPos f = wave' S.empty (S.singleton startPos)
   where _\\ₛ_ : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         _\\ₛ_ set₁ set₂ = List.foldr S.delete set₁ (S.toList set₂)
         neighborhood : Pos → List Pos
-        neighborhood pos = List.mapMaybe (Maybe.map proj₁) $ n‵ pos
-                                                           ∷ s‵ pos
-                                                           ∷ w‵ pos
-                                                           ∷ e‵ pos
-                                                           ∷ []
+        neighborhood pos = List.mapMaybe (Maybe.map proj₁ₑ) $ n‵ pos
+                                                            ∷ s‵ pos
+                                                            ∷ w‵ pos
+                                                            ∷ e‵ pos
+                                                            ∷ []
         nextFront : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
         nextFront passed front = (S.fromList $ List.filter ((Bool._≟ true) ∘ f) $ List.concatMap neighborhood (S.toList front)) \\ₛ passed
         wave' : ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ → ⟨Set⟩ₚₒₛ
@@ -137,10 +138,10 @@ wave startPos f = wave' S.empty (S.singleton startPos)
                              then passed
                              else wave' (AVL.union passed front) (nextFront passed front)
 
-getInputPoints : Field → (pos : Pos) → Player → List ((∃[ chainPos ] Adjacent pos chainPos) × (∃[ capturedPos ] Adjacent pos capturedPos))
+getInputPoints : Field → (pos : Pos) → Player → List ((∃ₑ[ chainPos ] Adjacent pos chainPos) × (∃ₑ[ capturedPos ] Adjacent pos capturedPos))
 getInputPoints fld pos player =
-  let isDirectionPlayer : ((pos₁ : Pos) → Maybe (∃[ pos₂ ] Adjacent pos₁ pos₂)) → Bool
-      isDirectionPlayer dir = Maybe.maybe′ (λ{(dirPos , _) → isPlayer fld dirPos player}) false $ dir pos
+  let isDirectionPlayer : ((pos₁ : Pos) → Maybe (∃ₑ[ pos₂ ] Adjacent pos₁ pos₂)) → Bool
+      isDirectionPlayer dir = Maybe.maybe′ (λ{(dirPos ,ₑ _) → isPlayer fld dirPos player}) false $ dir pos
       list₁ = if not $ isDirectionPlayer w‵ then
                 if isDirectionPlayer nw‵ then List.fromMaybe (Maybe.zip (nw‵ pos) (w‵ pos))
                 else if isDirectionPlayer n‵ then List.fromMaybe (Maybe.zip (n‵ pos) (w‵ pos))
@@ -178,38 +179,38 @@ square (pos ∷ tail) = square‵ $ pos ∷ tail
         square‵ (pos₁ ∷ pos₂ ∷ tail) = skewProduct pos₁ pos₂ + square‵ (pos₂ ∷ tail)
 
 -- Removes intersections from a chain.
-flatten : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → ∃[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
-flatten (pos ⁺∷ []) [-] = (pos ⁺∷ [] , ([-] , (refl , [-]ₛₗ)))
+flatten : (chain₁ : List⁺ Pos) → @0 IsChain⁺ chain₁ → ∃ₑ[ chain₂ ] (IsChain⁺ chain₂ × SameHead chain₁ chain₂ × SameLast chain₁ chain₂)
+flatten (pos ⁺∷ []) [-] = (pos ⁺∷ [] ,ₑ ([-] , (refl , [-]ₛₗ)))
 flatten (pos₁ ⁺∷ pos₂ ∷ chain) (adj ∷ₗ chainAdj₁) with flatten (pos₂ ⁺∷ chain) chainAdj₁
-... | (.pos₂ ⁺∷ chain₂ , (chainAdj₂ , (refl , sameLast))) = (_ , (proj₁ (proj₂ flattened) , (refl , pos₁ ∷ₛₗₗ same-last-lemm₄ sameLast (proj₂ (proj₂ flattened)))))
-  where flatten‵ : (chain₁ : List⁺ Pos) → IsChain⁺ chain₁ → Maybe (∃[ chain₂ ] (IsChain⁺ (pos₁ ⁺∷ chain₂) × SameLast chain₁ (pos₁ ⁺∷ chain₂)))
+... | (.pos₂ ⁺∷ chain₂ ,ₑ (chainAdj₂ , (refl , sameLast))) = (_ ,ₑ (proj₁ (proj₂ₑ flattened) , (refl , pos₁ ∷ₛₗₗ same-last-lemm₄ sameLast (proj₂ (proj₂ₑ flattened)))))
+  where flatten‵ : (chain₁ : List⁺ Pos) → @0 IsChain⁺ chain₁ → Maybe (∃ₑ[ chain₂ ] (IsChain⁺ (pos₁ ⁺∷ chain₂) × SameLast chain₁ (pos₁ ⁺∷ chain₂)))
         flatten‵ (pos ⁺∷ []) [-] with pos ≟ₚₒₛ pos₁
         ... | false because _ = nothing
-        ... | true because ofʸ refl = just ([] , ([-] , [-]ₛₗ))
+        ... | true because ofʸ refl = just ([] ,ₑ ([-] , [-]ₛₗ))
         flatten‵ (pos₃ ⁺∷ pos₄ ∷ t) (adj ∷ₗ chainAdj) with pos₃ ≟ₚₒₛ pos₁
-        ... | false because _ = Maybe.map (λ{(chain , (isChain , sameLast)) → (chain , (isChain , pos₃ ∷ₛₗₗ sameLast))}) $ flatten‵ (pos₄ ⁺∷ t) chainAdj
-        ... | true because ofʸ refl = just (pos₄ ∷ t , (adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁)))
-        flattened = Maybe.fromMaybe (pos₂ ∷ chain , (adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast)) $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
+        ... | false because _ = Maybe.map (λ{(chain ,ₑ (isChain , sameLast)) → (chain ,ₑ (isChain , pos₃ ∷ₛₗₗ sameLast))}) $ flatten‵ (pos₄ ⁺∷ t) chainAdj
+        ... | true because ofʸ refl = just (pos₄ ∷ t ,ₑ (adj ∷ₗ chainAdj , pos₃ ∷ₛₗₗ (pos₃ ∷ₛₗᵣ same-last-lemm₁)))
+        flattened = Maybe.fromMaybe (pos₂ ∷ chain ,ₑ (adj ∷ₗ chainAdj₁ , pos₁ ∷ₛₗᵣ same-last-lemm₂ sameLast)) $ flatten‵ (pos₂ ⁺∷ chain₂) chainAdj₂
 
 {-# TERMINATING #-}
-buildChain : Field → (startPos nextPos : Pos) → Adjacent startPos nextPos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-buildChain fld startPos nextPos adj player = if ⌊ square (List⁺.toList (proj₁ chain₂)) ℤ.<? 0ℤ ⌋ then just chain₂ else nothing
-  where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃[ pos₂ ] Adjacent pos₁ pos₂
+buildChain : Field → (startPos nextPos : Pos) → @0 Adjacent startPos nextPos → Player → Maybe (∃ₑ[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+buildChain fld startPos nextPos adj player = if ⌊ square (List⁺.toList (proj₁ₑ chain₂)) ℤ.<? 0ℤ ⌋ then just chain₂ else nothing
+  where getNextPlayerPos : (pos₁ : Pos) → Direction → ∃ₑ[ pos₂ ] Adjacent pos₁ pos₂
         getNextPlayerPos centerPos dir with direction→pos dir centerPos
         ... | nothing = getNextPlayerPos centerPos $ rotate dir -- TODO: use filter + maybe′ ?
-        ... | just (pos , adj) = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then (pos , adj)
-                                 else (getNextPlayerPos centerPos $ rotate dir)
-        getChain : (startPos‵ nextPos‵ : Pos) → Adjacent startPos‵ nextPos‵ → ∃[ chain ] (IsChain⁺ (startPos‵ ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
-        getChain _ nextPos adj = let (nextPos‵ , nextAdj) = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
-                                     (nextChain , (nextChainAdj , nextRing)) = getChain nextPos nextPos‵ nextAdj
+        ... | just (pos ,ₑ adj) = if ⌊ pos ≟ₚₒₛ startPos ⌋ ∨ (isPlayer fld pos player) then (pos ,ₑ adj)
+                                  else (getNextPlayerPos centerPos $ rotate dir)
+        getChain : (startPos‵ nextPos‵ : Pos) → @0 Adjacent startPos‵ nextPos‵ → ∃ₑ[ chain ] (IsChain⁺ (startPos‵ ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
+        getChain _ nextPos adj = let (nextPos‵ ,ₑ nextAdj) = getNextPlayerPos nextPos (rotate¬adjacent (inverse (direction adj)))
+                                     (nextChain ,ₑ (nextChainAdj , nextRing)) = getChain nextPos nextPos‵ nextAdj
                                  in case nextPos‵ ≟ₚₒₛ startPos of
-                                    λ { (true because ofʸ proof) → (nextPos ⁺∷ [] , (adj ∷ₗ [-] , ring-init (adjacent-symm (subst (Adjacent nextPos) proof nextAdj))))
-                                      ; (false because _) → (nextPos ∷⁺ nextChain , (adj ∷ₗ nextChainAdj , ring-extend nextRing))
+                                    λ { (true because ofʸ proof) → (nextPos ⁺∷ [] ,ₑ (adj ∷ₗ [-] , ring-init (adjacent-symm (subst (Adjacent nextPos) proof nextAdj))))
+                                      ; (false because _) → (nextPos ∷⁺ nextChain ,ₑ (adj ∷ₗ nextChainAdj , ring-extend nextRing))
                                       }
-        chain₁ : ∃[ chain ] (IsChain⁺ (startPos ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
-        chain₁ = (_ , proj₂ (getChain startPos nextPos adj))
-        chain₂ : ∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
-        chain₂ = map₂ (λ{(isChain , (refl , sameLast)) → (isChain , is-ring-lemm (proj₂ (proj₂ chain₁)) refl sameLast) }) $ flatten (startPos ∷⁺ proj₁ chain₁) (proj₁ (proj₂ chain₁))
+        chain₁ : ∃ₑ[ chain ] (IsChain⁺ (startPos ∷⁺ chain) × IsRing⁺ (startPos ∷⁺ chain))
+        chain₁ = (_ ,ₑ proj₂ₑ (getChain startPos nextPos adj))
+        chain₂ : ∃ₑ[ chain ] (IsChain⁺ chain × IsRing⁺ chain)
+        chain₂ = map₂ₑ (λ @0 {(isChain , (refl , sameLast)) → (isChain , is-ring-lemm (proj₂ (proj₂ₑ chain₁)) refl sameLast) }) $ flatten (startPos ∷⁺ proj₁ₑ chain₁) (proj₁ (proj₂ₑ chain₁))
 
 posInsideRing : Pos → List Pos → Bool
 posInsideRing pos ring = intersectionsCount ring $ firstIntersectionState $ List.reverse ring
@@ -249,14 +250,14 @@ getInsideRing startPos ring =
   in wave startPos (not ∘ (S._∈? ringSet))
 
 {-# TERMINATING #-}
-getEmptyBaseChain : Field → Pos → Player → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
-  where getEmptyBaseChain‵ : Pos → Maybe (∃[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
-        getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁)
+getEmptyBaseChain : Field → Pos → Player → Maybe (∃ₑ[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+getEmptyBaseChain fld startPos player = (w startPos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁ₑ)
+  where getEmptyBaseChain‵ : Pos → Maybe (∃ₑ[ chain ] (IsChain⁺ chain × IsRing⁺ chain))
+        getEmptyBaseChain‵ pos = if not $ isPlayer fld pos player then (w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁ₑ)
                                  else let inputPoints = getInputPoints fld pos player
-                                          chains = List.mapMaybe (λ{((chainPos , adj) , _) → buildChain fld pos chainPos adj player}) inputPoints
-                                          result = List.head $ List.filter ((Bool._≟ true) ∘ posInsideRing startPos ∘ List⁺.toList ∘ proj₁) chains
-                                      in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁))
+                                          chains = List.mapMaybe (λ{((chainPos ,ₑ adj) , _) → buildChain fld pos chainPos adj player}) inputPoints
+                                          result = List.head $ List.filter ((Bool._≟ true) ∘ posInsideRing startPos ∘ List⁺.toList ∘ proj₁ₑ) chains
+                                      in result Maybe.<∣> ((w pos) Maybe.>>= (getEmptyBaseChain‵ ∘ proj₁ₑ))
 
 capture : Player → Point → Point
 capture player EmptyPoint = BasePoint player false
@@ -276,11 +277,11 @@ putPoint pos player fld _ =
       enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
       enemyEmptyBase = List.filter (λ pos‵ → isEmptyBase fld pos‵ enemyPlayer Bool.≟ true) $
                        S.toList $
-                       Maybe.maybe′ (λ{(chain , _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
+                       Maybe.maybe′ (λ{(chain ,ₑ _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
       inputPoints = getInputPoints fld pos player
-      captures = List.mapMaybe (λ{((chainPos , chainAdj) , (capturedPos , _)) →
+      captures = List.mapMaybe (λ{((chainPos ,ₑ chainAdj) , (capturedPos ,ₑ _)) →
         Maybe.map (λ chain →
-          (chain , (S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ chain))) (buildChain fld pos chainPos chainAdj player)}) inputPoints
+          (chain , (S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ₑ chain))) (buildChain fld pos chainPos chainAdj player)}) inputPoints
       capturedCount = List.length ∘ List.filter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer Bool.≟ true)
       freedCount = List.length ∘ List.filter (λ pos‵ → isCapturedPoint fld pos‵ player Bool.≟ true)
       (emptyCaptures , realCaptures) = List.partition (λ{(_ , captured) → capturedCount captured ℕ.≟ 0}) captures
