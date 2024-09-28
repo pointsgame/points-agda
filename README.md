@@ -12,3 +12,17 @@ point placement function takes coordinates as finite numbers bounded by the size
 of the field and requires a proof that putting is allowed.
 
 Some functions use the TERMINATING pragma to bypass Agda's termination checking.
+
+## Benchmark
+
+Build with:
+
+```sh
+agda --ghc-flag=-O2 --compile src/Bench.agda
+```
+
+Run with:
+
+```sh
+time ./src/Bench 39 32 5 7
+```
