@@ -5,7 +5,6 @@ open import Data.Nat as ℕ using (ℕ)
 module Field {width height : ℕ} where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_)
-open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; toℕ)
 open import Data.Integer as ℤ using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
 open import Data.List as List using (List; []; _∷_; _++_)
