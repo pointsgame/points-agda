@@ -4,9 +4,8 @@ open import Data.Empty using (⊥)
 open import Level using (Level; _⊔_)
 open import Function using (id)
 
--- Like ⊥-elim from Data.Empty but allows ⊥ to be erased
-⊥-elimₑ : ∀ {@0 w} {@0 Whatever : Set w} → @0 ⊥ → Whatever
-⊥-elimₑ ()
+⊥-recover : @0 ⊥ → ⊥
+⊥-recover ()
 
 private
   variable

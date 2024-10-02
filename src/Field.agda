@@ -5,6 +5,7 @@ open import Data.Nat as ℕ using (ℕ)
 module Field {width height : ℕ} where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_; not; _∨_)
+open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; toℕ)
 open import Data.Integer as ℤ using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
 open import Data.List as List using (List; []; _∷_; _++_)
@@ -71,7 +72,7 @@ same-last-lemm₄ (x ∷ₛₗᵣ a) (.x ∷ₛₗₗ b) = same-last-lemm₄ a b
 same-last-lemm₄ {l₂ = .x ⁺∷ z ∷ l₂} (x ∷ₛₗᵣ a) (y ∷ₛₗᵣ b) = y ∷ₛₗᵣ same-last-lemm₄ a (same-last-lemm₃ b)
 
 @0 is-ring-lemm : ∀ {ring₁ ring₂ : List⁺ Pos} → IsRing⁺ ring₁ → SameHead ring₁ ring₂ → SameLast ring₁ ring₂ → IsRing⁺ ring₂
-is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elimₑ (adjacent-⊥ adj)
+is-ring-lemm {.pos₁ ⁺∷ .pos₁ ∷ []} {pos₁ ⁺∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ [-]ₛₗ) =  ⊥-elim $ ⊥-recover (adjacent-⊥ adj)
 is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗₗ (.pos₁ ∷ₛₗᵣ [-]ₛₗ)) = ring-init adj
 is-ring-lemm {.pos₁ ⁺∷ pos₂ ∷ []} {pos₁ ⁺∷ .pos₂ ∷ []} (ring-init adj) refl (.pos₁ ∷ₛₗᵣ (.pos₁ ∷ₛₗₗ [-]ₛₗ)) = ring-init adj
 is-ring-lemm {.pos ⁺∷ _ ∷ []} {pos ⁺∷ _ ∷ _ ∷ tail} (ring-init adj) refl sameLast = ring-extend (is-ring-lemm (ring-init adj) refl $

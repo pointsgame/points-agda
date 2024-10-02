@@ -2,7 +2,7 @@
 
 module Pos where
 
-open import Data.Empty using (⊥)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; suc; inject₁; _<_; _≟_)
 open import Data.Fin.Patterns
 open import Data.Fin.Properties using (<-strictTotalOrder; *↔×)
@@ -277,7 +277,7 @@ direction {pos₁ = pos₁} {pos₂ = pos₂} adj =
                     λ { (yes _) → dir↗
                     ; (no p₇) → case decAdjacent↙ pos₁ pos₂ of
                       λ { (yes _) → dir↙
-                      ; (no p₈) → ⊥-elimₑ (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
+                      ; (no p₈) → ⊥-elim $ ⊥-recover (adjacentAbsurd adj p₁ p₂ p₃ p₄ p₅ p₆ p₇ p₈)
                       }
                     }
                   }
