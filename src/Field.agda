@@ -12,6 +12,7 @@ open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
 open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to []ₗ; _∷_ to _∷ₗ_)
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
+open import Data.Nat.ListAction using (sum)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; map₂; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Vec as Vec using (Vec; _[_]≔_)
@@ -285,8 +286,8 @@ putPoint pos player fld _ =
       capturedCount = List.length ∘ List.filter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer Bool.≟ true)
       freedCount = List.length ∘ List.filter (λ pos‵ → isCapturedPoint fld pos‵ player Bool.≟ true)
       (emptyCaptures , realCaptures) = List.partition (λ{(_ , captured) → capturedCount captured ℕ.≟ 0}) captures
-      capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
-      freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
+      capturedTotal = sum $ List.map (capturedCount ∘ proj₂) realCaptures
+      freedTotal = sum $ List.map (freedCount ∘ proj₂) realCaptures
       newEmptyBase = List.filter (λ pos‵ → point fld pos‵ ≟ₚₜ EmptyPoint) $ List.concatMap proj₂ emptyCaptures
       realCaptured = List.concatMap proj₂ realCaptures
       newScoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
