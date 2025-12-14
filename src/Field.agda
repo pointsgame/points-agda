@@ -11,11 +11,14 @@ open import Data.Integer as ℤ using (ℤ; 0ℤ; _+_; _-_; _*_; +_)
 open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷⁺_; head) renaming (_∷_ to _⁺∷_)
 open import Data.List.Relation.Unary.Linked using (Linked; [-]) renaming ([] to []ₗ; _∷_ to _∷ₗ_)
+open import Data.List.Sort.MergeSort as Sort using ()
 open import Data.Maybe as Maybe using (Maybe; nothing; just)
+open import Data.Nat.Properties as NatProperties using ()
 open import Data.Product using (_×_; _,_; proj₁; proj₂; map₂; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Vec as Vec using (Vec; _[_]≔_)
 open import Function using (_$_; _∘_; case_of_)
+open import Relation.Binary.Construct.On as On using ()
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Relation.Nullary using (_because_; ofʸ)
 open import Relation.Nullary.Decidable using (⌊_⌋)
@@ -274,67 +277,71 @@ capture player (EmptyBasePoint _) = BasePoint player false
 putPoint : (pos : Pos) → Player → (fld : Field) → Bool.T (isPuttingAllowed fld pos) → Field
 putPoint pos player fld _ =
   let enemyPlayer = next player
-      enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
-      enemyEmptyBase = List.filter (λ pos‵ → isEmptyBase fld pos‵ enemyPlayer Bool.≟ true) $
-                       S.toList $
-                       Maybe.maybe′ (λ{(chain ,ₑ _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
-      inputPoints = getInputPoints fld pos player
-      captures = List.mapMaybe (λ{((chainPos ,ₑ chainAdj) , (capturedPos ,ₑ _)) →
-        Maybe.map (λ chain →
-          (chain , (S.toList $ getInsideRing capturedPos $ List⁺.toList $ proj₁ₑ chain))) (buildChain fld pos chainPos chainAdj player)}) inputPoints
-      capturedCount = List.length ∘ List.filter (λ pos‵ → isPlayersPoint fld pos‵ enemyPlayer Bool.≟ true)
-      freedCount = List.length ∘ List.filter (λ pos‵ → isCapturedPoint fld pos‵ player Bool.≟ true)
-      (emptyCaptures , realCaptures) = List.partition (λ{(_ , captured) → capturedCount captured ℕ.≟ 0}) captures
-      capturedTotal = List.sum $ List.map (capturedCount ∘ proj₂) realCaptures
-      freedTotal = List.sum $ List.map (freedCount ∘ proj₂) realCaptures
-      newEmptyBase = List.filter (λ pos‵ → point fld pos‵ ≟ₚₜ EmptyPoint) $ List.concatMap proj₂ emptyCaptures
-      realCaptured = List.concatMap proj₂ realCaptures
-      newScoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld ℕ.+ capturedTotal else Field.scoreRed fld ℕ.∸ freedTotal
-      newScoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack fld ℕ.+ capturedTotal else Field.scoreBlack fld ℕ.∸ freedTotal
+      pointAtPos = point fld pos
       newMoves = (pos , player) ∷ Field.moves fld
-      point‵ = point fld pos
-  in if ⌊ point‵ ≟ₚₜ EmptyBasePoint enemyPlayer ⌋
-     then if not $ List.null captures
-          then record
-               { scoreRed = newScoreRed
-               ; scoreBlack = newScoreBlack
-               ; moves = newMoves
-               ; lastSurroundChains = List.map proj₁ realCaptures
-               ; lastSurroundPlayer = player
-               ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                              points₂ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyPoint) points₁ enemyEmptyBase
-                              points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
-                          in points₃
-               }
-          else record
-               { scoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld else Field.scoreRed fld ℕ.+ 1
-               ; scoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack fld else Field.scoreBlack fld ℕ.+ 1
-               ; moves = newMoves
-               ; lastSurroundChains = List.fromMaybe enemyEmptyBaseChain
-               ; lastSurroundPlayer = enemyPlayer
-               ; points = let points₁ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ BasePoint enemyPlayer false) (Field.points fld) enemyEmptyBase
-                              points₂ = points₁ [ Pos.toFin pos ]≔ BasePoint enemyPlayer true
-                          in points₂
-               }
-     else if ⌊ point‵ ≟ₚₜ EmptyBasePoint player ⌋
-     then record
-          { Field fld
-          ; moves = newMoves
-          ; lastSurroundChains = []
-          ; lastSurroundPlayer = player
-          ; points = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-          }
-     else record
-          { scoreRed = newScoreRed
-          ; scoreBlack = newScoreBlack
-          ; moves = newMoves
-          ; lastSurroundChains = List.map proj₁ realCaptures
-          ; lastSurroundPlayer = player
-          ; points = let points₁ = Field.points fld [ Pos.toFin pos ]≔ PlayerPoint player
-                         points₂ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ EmptyBasePoint player) points₁ newEmptyBase
-                         points₃ = List.foldr (λ pos‵ points → points [ Pos.toFin pos‵ ]≔ capture player (point fld pos‵)) points₂ realCaptured
-                     in points₃
-          }
+      inputPoints = getInputPoints fld pos player
+      potentialChains = List.mapMaybe (λ { ((chainPos ,ₑ chainAdj) , (capturedPos ,ₑ _)) →
+                                           Maybe.map (_, capturedPos) (buildChain fld pos chainPos chainAdj player)
+                                         }) inputPoints
+      sortedChains = Sort.sort (On.decTotalOrder NatProperties.≤-decTotalOrder (List⁺.length ∘ proj₁ₑ ∘ proj₁)) potentialChains
+      initialField = record fld { moves = newMoves ; lastSurroundPlayer = player ; lastSurroundChains = [] }
+      fieldWithCaptures = List.foldl
+        (λ currentFld (chainStruct , capturedPos) →
+           let chain = List⁺.toList (proj₁ₑ chainStruct)
+               capturedSet = getInsideRing capturedPos chain
+               capturedList = S.toList capturedSet
+               capturedCount = List.length (List.filter (λ p → isPlayersPoint currentFld p enemyPlayer Bool.≟ true) capturedList)
+               freedCount = List.length (List.filter (λ p → isCapturedPoint currentFld p player Bool.≟ true) capturedList)
+           in if ⌊ capturedCount ℕ.>? 0 ⌋ then
+                record currentFld
+                  { scoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed currentFld ℕ.+ capturedCount else Field.scoreRed currentFld ℕ.∸ freedCount
+                  ; scoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack currentFld ℕ.+ capturedCount else Field.scoreBlack currentFld ℕ.∸ freedCount
+                  ; lastSurroundChains = chainStruct ∷ Field.lastSurroundChains currentFld
+                  ; points = List.foldr (λ p pts → pts [ Pos.toFin p ]≔ capture player (point currentFld p)) (Field.points currentFld) capturedList
+                  }
+              else
+                record currentFld
+                  { points = List.foldr (λ p pts → pts [ Pos.toFin p ]≔ EmptyBasePoint player)
+                                        (Field.points currentFld)
+                                        (List.filter (λ p → point currentFld p ≟ₚₜ EmptyPoint) capturedList)
+                  }
+        )
+        initialField
+        sortedChains
+  in if ⌊ pointAtPos ≟ₚₜ EmptyBasePoint player ⌋ then
+       record fieldWithCaptures
+         { lastSurroundChains = []
+         ; points = (Field.points fieldWithCaptures) [ Pos.toFin pos ]≔ PlayerPoint player
+         }
+     else if ⌊ pointAtPos ≟ₚₜ EmptyBasePoint enemyPlayer ⌋ then
+       if not (List.null (Field.lastSurroundChains fieldWithCaptures)) then (
+         -- Broke enemy base
+         let enemyEmptyBase = wave pos (λ p → isEmptyBase fieldWithCaptures p enemyPlayer)
+         in record fieldWithCaptures
+              { points = let points₁ = List.foldr (λ p pts → pts [ Pos.toFin p ]≔ EmptyPoint) (Field.points fieldWithCaptures) (S.toList enemyEmptyBase)
+                             points₂ = points₁ [ Pos.toFin pos ]≔ PlayerPoint player
+                         in points₂
+              }
+       ) else (
+         -- Suicide move (placed in enemy base without capturing)
+         let enemyEmptyBaseChain = getEmptyBaseChain fld pos enemyPlayer
+             enemyEmptyBase = List.filter (λ pos‵ → isEmptyBase fld pos‵ enemyPlayer Bool.≟ true) $
+                              S.toList $
+                              Maybe.maybe′ (λ{(chain ,ₑ _) → getInsideRing pos (List⁺.toList chain)}) S.empty enemyEmptyBaseChain
+         in record fieldWithCaptures
+              { scoreRed = if ⌊ player ≟ₚₗ Red ⌋ then Field.scoreRed fld else Field.scoreRed fld ℕ.+ 1
+              ; scoreBlack = if ⌊ player ≟ₚₗ Black ⌋ then Field.scoreBlack fld else Field.scoreBlack fld ℕ.+ 1
+              ; lastSurroundPlayer = enemyPlayer
+              ; lastSurroundChains = List.fromMaybe enemyEmptyBaseChain
+              ; points = let points₁ = List.foldr (λ p pts → pts [ Pos.toFin p ]≔ BasePoint enemyPlayer false) (Field.points fld) enemyEmptyBase
+                             points₂ = points₁ [ Pos.toFin pos ]≔ BasePoint enemyPlayer true
+                         in points₂
+              }
+     ) else
+       -- Normal placement
+       record fieldWithCaptures
+         { points = (Field.points fieldWithCaptures) [ Pos.toFin pos ]≔ PlayerPoint player
+         }
 
 lastPlayer : Field → Maybe Player
 lastPlayer = Maybe.map proj₂ ∘ List.head ∘ Field.moves

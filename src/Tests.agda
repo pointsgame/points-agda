@@ -318,3 +318,39 @@ _ = refl
 
 _ : Field.scoreBlack twoSurroundingsWithCommonDotOneBorderlineEmptyPlace ≡ 0
 _ = refl
+
+ambiguousSurrounding1 = GenField.fld $ Maybe.from-just $ constructField "
+.aa.aa.
+a..b..a
+a.aAa.a
+a..a..a
+.a...a.
+..aaa..
+"
+
+_ : Field.scoreRed ambiguousSurrounding1 ≡ 1
+_ = refl
+
+_ : Field.scoreBlack ambiguousSurrounding1 ≡ 0
+_ = refl
+
+_ : isPuttingAllowed ambiguousSurrounding1 (3F , 4F) ≡ true
+_ = refl
+
+ambiguousSurrounding2 = GenField.fld $ Maybe.from-just $ constructField "
+..aaa..
+.a...a.
+a..a..a
+a.aAa.a
+a..b..a
+.aa.aa.
+"
+
+_ : Field.scoreRed ambiguousSurrounding2 ≡ 1
+_ = refl
+
+_ : Field.scoreBlack ambiguousSurrounding2 ≡ 0
+_ = refl
+
+_ : isPuttingAllowed ambiguousSurrounding2 (3F , 1F) ≡ true
+_ = refl
